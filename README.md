@@ -15,15 +15,14 @@ An interactive business model designer and tracker for small and medium business
 Just open the file in your browser — no build step, no server needed:
 
 ```bash
-open docs/index.html
+open index.html
 # or on Linux:
-xdg-open docs/index.html
+xdg-open index.html
 ```
 
 Or use any static file server:
 
 ```bash
-cd docs
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
@@ -33,7 +32,7 @@ python3 -m http.server 8000
 1. Push the repository to GitHub.
 2. Go to **Settings → Pages** in your GitHub repository.
 3. Under **Source**, select **Deploy from a branch**.
-4. Set the branch to `main` (or your branch) and the folder to `/docs`.
+4. Set the branch to `main` (or your branch) and the folder to `/ (root)`.
 5. Click **Save**.
 6. Your site will be live at `https://<username>.github.io/BMT/` within a few minutes.
 
@@ -56,13 +55,12 @@ python3 -m http.server 8000
 ## File Structure
 
 ```
-docs/                  # GitHub Pages root
-├── index.html         # App shell + all CSS
-├── app.js             # Router, navigation, settings
-├── wizard.js          # Onboarding wizard + inference engine
-├── canvas.js          # Business Model Canvas view
-├── tracker.js         # Hypothesis tracking dashboard
-└── store.js           # localStorage persistence layer
+index.html             # App shell + all CSS
+app.js                 # Router, navigation, settings
+wizard.js              # Onboarding wizard + inference engine
+canvas.js              # Business Model Canvas view
+tracker.js             # Hypothesis tracking dashboard
+store.js               # localStorage persistence layer
 
 archive/               # Original OxO consulting simulator (archived)
 ```
