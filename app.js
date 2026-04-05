@@ -116,6 +116,24 @@ var App = (function() {
       h += '</div>';
     }
 
+    // Your Tools
+    h += '<div class="settings-section">';
+    h += '<h3>Your Tools</h3>';
+    h += '<p class="page-subtitle">Select the tools you use. This personalizes your action prompts.</p>';
+    var toolPrefs = Store.getToolPrefs();
+    Prompts.TOOL_CATEGORIES.forEach(function(cat) {
+      h += '<div class="settings-tool-cat"><span class="settings-tool-label">' + esc(cat.label) + '</span>';
+      h += '<div class="wiz-chips settings-tool-chips" data-cat="' + cat.id + '">';
+      cat.tools.forEach(function(tid) {
+        var t = Prompts.TOOL_CONNECTORS[tid];
+        if (!t) return;
+        var active = toolPrefs[cat.id] && toolPrefs[cat.id].indexOf(tid) >= 0;
+        h += '<span class="wiz-chip' + (active ? ' active' : '') + '" data-val="' + tid + '" data-cat="' + cat.id + '">' + t.icon + ' ' + esc(t.name) + '</span>';
+      });
+      h += '</div></div>';
+    });
+    h += '</div>';
+
     // Export/Import
     h += '<div class="settings-section">';
     h += '<h3>Data</h3>';
@@ -144,6 +162,20 @@ var App = (function() {
           Store.saveBusiness(biz);
           renderSettings(container);
         }
+      });
+    });
+
+    // Tool preference chips
+    container.querySelectorAll('.settings-tool-chips .wiz-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        var tid = this.getAttribute('data-val');
+        var cat = this.getAttribute('data-cat');
+        var prefs = Store.getToolPrefs();
+        if (!prefs[cat]) prefs[cat] = [];
+        var idx = prefs[cat].indexOf(tid);
+        if (idx >= 0) { prefs[cat].splice(idx, 1); this.classList.remove('active'); }
+        else { prefs[cat].push(tid); this.classList.add('active'); }
+        Store.saveToolPrefs(prefs);
       });
     });
 

@@ -19,6 +19,7 @@ var Wizard = (function() {
     teamSize: '',
     goal: '',
     concern: '',
+    toolPrefs: {},
     aiHypotheses: [],
     selectedHypIds: null // null = all selected
   };
@@ -32,7 +33,8 @@ var Wizard = (function() {
     { id: 'customers', prompt: 'Who are your best customers? The ones who really love what you do.' },
     { id: 'economics', prompt: 'How\'s business going right now? Just ballpark numbers \u2014 no judgment!' },
     { id: 'goal', prompt: 'What\'s your biggest goal for the next 6 months?' },
-    { id: 'concerns', prompt: 'Last one before I build your hypotheses. What keeps you up at night about this business?' },
+    { id: 'concerns', prompt: 'Almost there! What keeps you up at night about this business?' },
+    { id: 'toolkit', prompt: 'One more thing \u2014 what tools do you already use to run your business? This helps me suggest specific actions later.' },
     { id: 'hypotheses', prompt: 'Based on everything you\'ve told me, here are hypotheses to test. These are specific to YOUR business.' }
   ];
 
@@ -177,7 +179,25 @@ var Wizard = (function() {
       case 'concerns':
         h += '<textarea class="wiz-textarea" id="wiz-concern" placeholder="e.g. Not enough customers, cash flow, competition, hiring the right people...">' + esc(data.concern) + '</textarea>';
         h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">';
-        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitConcerns()">Generate Hypotheses</button>';
+        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitConcerns()">Continue</button>';
+        h += '</div>';
+        break;
+
+      case 'toolkit':
+        Prompts.TOOL_CATEGORIES.forEach(function(cat) {
+          h += '<div class="wiz-field-label" style="margin-top:10px">' + esc(cat.label) + '</div>';
+          h += '<div class="wiz-chips wiz-tool-chips" data-cat="' + cat.id + '">';
+          cat.tools.forEach(function(tid) {
+            var t = Prompts.TOOL_CONNECTORS[tid];
+            if (!t) return;
+            var active = data.toolPrefs[cat.id] && data.toolPrefs[cat.id].indexOf(tid) >= 0;
+            h += '<span class="wiz-chip' + (active ? ' active' : '') + '" data-val="' + tid + '" data-cat="' + cat.id + '">' + t.icon + ' ' + esc(t.name) + '</span>';
+          });
+          h += '</div>';
+        });
+        h += '<div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between">';
+        h += '<button class="wiz-btn wiz-btn-back" onclick="Wizard.skipToolkit()">Skip</button>';
+        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitToolkit()">Continue</button>';
         h += '</div>';
         break;
 
@@ -216,7 +236,7 @@ var Wizard = (function() {
   function renderPreview() {
     var h = '<div class="preview-header">Your Business Model</div>';
     h += renderMiniCanvas();
-    if (data.aiHypotheses.length > 0 && step >= 6) {
+    if (data.aiHypotheses.length > 0 && step >= 7) {
       h += '<div class="preview-hyp-section">';
       h += '<div class="preview-header" style="margin-top:16px">Hypotheses</div>';
       var catColors = { customer: '#e67e22', value: '#2ecc71', revenue: '#3498db', growth: '#9b59b6', cost: '#e74c3c' };
@@ -289,6 +309,7 @@ var Wizard = (function() {
     bindChips('wiz-costs', data.costs);
     bindGoalChips();
     bindCustomInputs();
+    bindToolkitChips();
     bindPreviewToggle();
     bindHypToggles();
   }
@@ -339,6 +360,19 @@ var Wizard = (function() {
         var el = document.getElementById('wiz-goals');
         if (el) el.querySelectorAll('.wiz-chip').forEach(function(c) { c.classList.remove('active'); });
       }
+    });
+  }
+
+  function bindToolkitChips() {
+    document.querySelectorAll('.wiz-tool-chips .wiz-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        var tid = this.getAttribute('data-val');
+        var cat = this.getAttribute('data-cat');
+        if (!data.toolPrefs[cat]) data.toolPrefs[cat] = [];
+        var idx = data.toolPrefs[cat].indexOf(tid);
+        if (idx >= 0) { data.toolPrefs[cat].splice(idx, 1); this.classList.remove('active'); }
+        else { data.toolPrefs[cat].push(tid); this.classList.add('active'); }
+      });
     });
   }
 
@@ -486,6 +520,39 @@ var Wizard = (function() {
     data.concern = el ? el.value.trim() : '';
 
     addUserMessage('<div class="conv-answer-label">Biggest concern</div><div class="conv-answer-value">' + esc(data.concern || 'Nothing specific') + '</div>');
+    advanceStep();
+  }
+
+  function submitToolkit() {
+    var toolNames = [];
+    Object.keys(data.toolPrefs).forEach(function(cat) {
+      if (data.toolPrefs[cat] && data.toolPrefs[cat].length) {
+        data.toolPrefs[cat].forEach(function(tid) {
+          var t = Prompts.TOOL_CONNECTORS[tid];
+          if (t) toolNames.push(t.name);
+        });
+      }
+    });
+    addUserMessage('<div class="conv-answer-label">Tools</div><div class="conv-answer-value">' + (toolNames.length ? toolNames.map(esc).join(', ') : 'None selected') + '</div>');
+
+    // Generate hypotheses
+    loading = true;
+    render(container);
+
+    AI.generateHypotheses(data).then(function(result) {
+      loading = false;
+      data.aiHypotheses = result.hypotheses || [];
+      if (result.source === 'ai') {
+        addSystemMessage('Here are personalized hypotheses based on your business. Toggle off any that don\'t feel right.');
+      } else {
+        addSystemMessage('Here are some starter hypotheses to test. You can always add more later in the Tracker.');
+      }
+      advanceStep();
+    });
+  }
+
+  function skipToolkit() {
+    addUserMessage('<div class="conv-answer-value" style="color:var(--text3)">Skipped</div>');
 
     // Generate hypotheses
     loading = true;
@@ -539,6 +606,11 @@ var Wizard = (function() {
     // Save hypotheses
     selectedHyps.forEach(function(h) { Store.addHypothesis(h); });
 
+    // Save tool preferences
+    if (data.toolPrefs && Object.keys(data.toolPrefs).length) {
+      Store.saveToolPrefs(data.toolPrefs);
+    }
+
     // Clean up
     Store.setWizardComplete();
     Store.clearOnboardingData();
@@ -550,7 +622,7 @@ var Wizard = (function() {
   function reset() {
     step = 0;
     messages = [];
-    data = { websiteUrl: '', websiteData: null, name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', aiHypotheses: [], selectedHypIds: null };
+    data = { websiteUrl: '', websiteData: null, name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', toolPrefs: {}, aiHypotheses: [], selectedHypIds: null };
     loading = false;
   }
 
@@ -575,6 +647,8 @@ var Wizard = (function() {
     submitEconomics: submitEconomics,
     submitGoal: submitGoal,
     submitConcerns: submitConcerns,
+    submitToolkit: submitToolkit,
+    skipToolkit: skipToolkit,
     finish: finish,
     reset: reset
   };
