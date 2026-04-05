@@ -6,7 +6,8 @@ var Store = (function() {
     business: 'bmt_business',
     canvas: 'bmt_canvas',
     hypotheses: 'bmt_hypotheses',
-    wizardComplete: 'bmt_wizard_complete'
+    wizardComplete: 'bmt_wizard_complete',
+    onboardingData: 'bmt_onboarding_data'
   };
 
   function uid() {
@@ -126,6 +127,11 @@ var Store = (function() {
   function isWizardComplete() { return get(KEYS.wizardComplete) === true; }
   function setWizardComplete() { set(KEYS.wizardComplete, true); }
 
+  // Onboarding progress (resume on browser close)
+  function getOnboardingData() { return get(KEYS.onboardingData); }
+  function saveOnboardingData(data) { set(KEYS.onboardingData, data); }
+  function clearOnboardingData() { localStorage.removeItem(KEYS.onboardingData); }
+
   // Export / Import
   function exportAll() {
     return JSON.stringify({
@@ -171,6 +177,9 @@ var Store = (function() {
     addActual: addActual,
     isWizardComplete: isWizardComplete,
     setWizardComplete: setWizardComplete,
+    getOnboardingData: getOnboardingData,
+    saveOnboardingData: saveOnboardingData,
+    clearOnboardingData: clearOnboardingData,
     exportAll: exportAll,
     importAll: importAll,
     resetAll: resetAll
