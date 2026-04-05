@@ -5,7 +5,7 @@ var AI = (function() {
 
   // ── Configuration ──
   // Set this to your Cloudflare Worker proxy URL
-  var PROXY_URL = '';  // e.g. 'https://bmt-proxy.yourname.workers.dev/v1/messages'
+  var PROXY_URL = 'https://bmt-proxy.schlenga-bmt.workers.dev/v1/messages';
 
   // ── Keyword-based business type detection (fallback) ──
   var TYPE_KEYWORDS = {
