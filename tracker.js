@@ -5,6 +5,9 @@ var Tracker = (function() {
 
   var filter = 'all'; // all | critical | customer | value | revenue | growth | cost
   var loggingId = null; // hypothesis being logged
+  var showAllPrompts = false;
+  var activePrompts = []; // current action prompts
+  var connectorModal = null; // { prompt, phase: 'loading'|'ready' }
 
   var CAT_COLORS = {
     customer: { bg: '#fef3e2', fg: '#e67e22', label: 'Customer' },
@@ -58,6 +61,14 @@ var Tracker = (function() {
     }
     h += '</div>';
 
+    // Action prompts section
+    h += renderActionPrompts(hyps, biz);
+
+    // Connector modal
+    if (connectorModal) {
+      h += renderConnectorModal();
+    }
+
     // Filters
     h += '<div class="tracker-filters">';
     h += filterBtn('all', 'All');
@@ -94,6 +105,7 @@ var Tracker = (function() {
 
     container.innerHTML = h;
     bindTrackerEvents(container);
+    bindPromptEvents(container);
   }
 
   function summaryCard(label, count, color) {
@@ -228,6 +240,97 @@ var Tracker = (function() {
     return '<div class="hyp-sparkline">' + svg + '</div>';
   }
 
+  function renderActionPrompts(hyps, biz) {
+    var toolPrefs = Store.getToolPrefs();
+    var promptState = Store.getPromptState();
+
+    // Generate synchronously for immediate render
+    activePrompts = Prompts.generateSync(hyps, biz, toolPrefs, promptState);
+
+    // Fire async AI generation to upgrade prompts
+    Prompts.generate(hyps, biz, toolPrefs, promptState).then(function(aiPrompts) {
+      if (aiPrompts && aiPrompts.length > 0) {
+        // Only re-render if AI gave us different prompts
+        var oldKeys = activePrompts.map(function(p) { return p.key; }).join(',');
+        var newKeys = aiPrompts.map(function(p) { return p.key; }).join(',');
+        if (oldKeys !== newKeys) {
+          activePrompts = aiPrompts;
+          var section = document.getElementById('action-prompts-section');
+          if (section) {
+            section.innerHTML = renderActionPromptsInner();
+            bindPromptEvents(document.getElementById('app'));
+          }
+        }
+      }
+    }).catch(function() {});
+
+    if (activePrompts.length === 0) return '';
+
+    var h = '<div class="action-prompts" id="action-prompts-section">';
+    h += renderActionPromptsInner();
+    h += '</div>';
+    return h;
+  }
+
+  function renderActionPromptsInner() {
+    var visible = showAllPrompts ? activePrompts : activePrompts.slice(0, 3);
+    var urgColors = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--blue)' };
+    var urgLabels = { high: 'High', medium: 'Med', low: 'Low' };
+
+    var h = '<div class="action-prompts-header">';
+    h += '<div class="action-prompts-title">Actions for You</div>';
+    if (activePrompts.length > 3) {
+      h += '<button class="action-prompts-toggle" data-action="toggle-prompts">' + (showAllPrompts ? 'Show Less' : 'View All (' + activePrompts.length + ')') + '</button>';
+    }
+    h += '</div>';
+
+    h += '<div class="action-prompt-cards">';
+    visible.forEach(function(p) {
+      var color = urgColors[p.urgency] || urgColors.medium;
+      h += '<div class="action-prompt-card" style="border-left-color:' + color + '">';
+      h += '<div class="action-prompt-top">';
+      h += '<span class="action-prompt-badge" style="background:' + color + '">' + (urgLabels[p.urgency] || 'Med') + '</span>';
+      h += '<span class="action-prompt-effort">' + esc(p.effort) + '</span>';
+      h += '<button class="action-prompt-dismiss" data-key="' + esc(p.key) + '" title="Dismiss">&times;</button>';
+      h += '</div>';
+      h += '<div class="action-prompt-title">' + esc(p.title) + '</div>';
+      h += '<div class="action-prompt-desc">' + esc(p.description) + '</div>';
+      h += '<div class="action-prompt-actions">';
+      if (p.tool) {
+        h += '<button class="btn-warm action-prompt-tool-btn" data-key="' + esc(p.key) + '">' + p.tool.icon + ' Open ' + esc(p.tool.name) + '</button>';
+      }
+      h += '<button class="btn-warm action-prompt-done-btn" data-key="' + esc(p.key) + '" data-hyp="' + esc(p.hypId || '') + '">Done</button>';
+      h += '</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function renderConnectorModal() {
+    var p = connectorModal.prompt;
+    var phase = connectorModal.phase;
+    var h = '<div class="connector-overlay" id="connector-overlay">';
+    h += '<div class="connector-modal">';
+    if (phase === 'loading') {
+      h += '<div class="connector-icon">' + (p.tool ? p.tool.icon : '') + '</div>';
+      h += '<div class="connector-title">Connecting to ' + esc(p.tool ? p.tool.name : '') + '...</div>';
+      h += '<div class="connector-loading"><div class="connector-spinner"></div></div>';
+    } else {
+      h += '<div class="connector-icon">' + (p.tool ? p.tool.icon : '') + '</div>';
+      h += '<div class="connector-title">Ready!</div>';
+      h += '<div class="connector-action-text">Here\'s what to do:</div>';
+      h += '<div class="connector-desc">' + esc(p.description) + '</div>';
+      h += '<div class="connector-btns">';
+      h += '<button class="btn-warm wiz-btn-primary" id="connector-done" data-key="' + esc(p.key) + '" data-hyp="' + esc(p.hypId || '') + '">Mark as Done</button>';
+      h += '<button class="btn-warm" id="connector-close">Close</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+
   function bindTrackerEvents(container) {
     // Filters
     container.querySelectorAll('.filter-btn').forEach(function(btn) {
@@ -288,6 +391,69 @@ var Tracker = (function() {
           render(container);
         }
       });
+    });
+  }
+
+  function bindPromptEvents(container) {
+    // Toggle view all
+    var toggleBtn = container.querySelector('[data-action="toggle-prompts"]');
+    if (toggleBtn) toggleBtn.addEventListener('click', function() {
+      showAllPrompts = !showAllPrompts;
+      render(container);
+    });
+
+    // Done buttons
+    container.querySelectorAll('.action-prompt-done-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        Store.completePrompt(this.dataset.key, this.dataset.hyp || null);
+        render(container);
+      });
+    });
+
+    // Dismiss buttons
+    container.querySelectorAll('.action-prompt-dismiss').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        Store.dismissPrompt(this.dataset.key);
+        render(container);
+      });
+    });
+
+    // Tool connector buttons
+    container.querySelectorAll('.action-prompt-tool-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var key = this.dataset.key;
+        var prompt = null;
+        for (var i = 0; i < activePrompts.length; i++) {
+          if (activePrompts[i].key === key) { prompt = activePrompts[i]; break; }
+        }
+        if (!prompt) return;
+        connectorModal = { prompt: prompt, phase: 'loading' };
+        render(container);
+        // Simulate connection delay
+        setTimeout(function() {
+          connectorModal.phase = 'ready';
+          render(container);
+        }, 1500);
+      });
+    });
+
+    // Connector modal events
+    var overlay = document.getElementById('connector-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) { connectorModal = null; render(container); }
+      });
+    }
+    var closeBtn = document.getElementById('connector-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() {
+      connectorModal = null;
+      render(container);
+    });
+    var doneBtn = document.getElementById('connector-done');
+    if (doneBtn) doneBtn.addEventListener('click', function() {
+      Store.completePrompt(this.dataset.key, this.dataset.hyp || null);
+      connectorModal = null;
+      render(container);
     });
   }
 

@@ -7,7 +7,9 @@ var Store = (function() {
     canvas: 'bmt_canvas',
     hypotheses: 'bmt_hypotheses',
     wizardComplete: 'bmt_wizard_complete',
-    onboardingData: 'bmt_onboarding_data'
+    onboardingData: 'bmt_onboarding_data',
+    toolPrefs: 'bmt_tool_prefs',
+    promptState: 'bmt_prompt_state'
   };
 
   function uid() {
@@ -127,6 +129,28 @@ var Store = (function() {
   function isWizardComplete() { return get(KEYS.wizardComplete) === true; }
   function setWizardComplete() { set(KEYS.wizardComplete, true); }
 
+  // Tool preferences
+  function getToolPrefs() { return get(KEYS.toolPrefs) || {}; }
+  function saveToolPrefs(prefs) { set(KEYS.toolPrefs, prefs); }
+
+  // Prompt state (completed / dismissed)
+  function getPromptState() {
+    return get(KEYS.promptState) || { completed: [], dismissed: [] };
+  }
+  function savePromptState(state) { set(KEYS.promptState, state); }
+
+  function completePrompt(key, hypId) {
+    var state = getPromptState();
+    state.completed.push({ key: key, at: new Date().toISOString().slice(0, 10), hypId: hypId || null });
+    savePromptState(state);
+  }
+
+  function dismissPrompt(key) {
+    var state = getPromptState();
+    if (state.dismissed.indexOf(key) < 0) state.dismissed.push(key);
+    savePromptState(state);
+  }
+
   // Onboarding progress (resume on browser close)
   function getOnboardingData() { return get(KEYS.onboardingData); }
   function saveOnboardingData(data) { set(KEYS.onboardingData, data); }
@@ -139,6 +163,8 @@ var Store = (function() {
       canvas: getCanvas(),
       hypotheses: getHypotheses(),
       wizardComplete: isWizardComplete(),
+      toolPrefs: getToolPrefs(),
+      promptState: getPromptState(),
       exportedAt: new Date().toISOString()
     }, null, 2);
   }
@@ -150,6 +176,8 @@ var Store = (function() {
       if (data.canvas) saveCanvas(data.canvas);
       if (data.hypotheses) saveHypotheses(data.hypotheses);
       if (data.wizardComplete) setWizardComplete();
+      if (data.toolPrefs) saveToolPrefs(data.toolPrefs);
+      if (data.promptState) savePromptState(data.promptState);
       return true;
     } catch(e) { return false; }
   }
@@ -177,6 +205,12 @@ var Store = (function() {
     addActual: addActual,
     isWizardComplete: isWizardComplete,
     setWizardComplete: setWizardComplete,
+    getToolPrefs: getToolPrefs,
+    saveToolPrefs: saveToolPrefs,
+    getPromptState: getPromptState,
+    savePromptState: savePromptState,
+    completePrompt: completePrompt,
+    dismissPrompt: dismissPrompt,
     getOnboardingData: getOnboardingData,
     saveOnboardingData: saveOnboardingData,
     clearOnboardingData: clearOnboardingData,
