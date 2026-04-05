@@ -25,7 +25,7 @@ var App = (function() {
         container.innerHTML = '';
         container.appendChild(buildNav(route));
         var wizWrap = document.createElement('div');
-        wizWrap.className = 'content wizard-page';
+        wizWrap.className = 'onboarding-shell';
         container.appendChild(wizWrap);
         Wizard.render(wizWrap);
         return;
