@@ -1,44 +1,72 @@
-# OxO — Business Model Simulator v3
+# BMT — Business Model Tracker
 
-Strategic 5-year business model simulator for OxO consulting.
+An interactive business model designer and tracker for small and medium businesses, built on Lean Startup methodology. Design your business model through a guided wizard, visualize it on a Business Model Canvas, and track testable hypotheses with real data.
 
-## Quick Start
+## Features
+
+- **Guided Wizard** — Answer simple questions about your business idea, customers, revenue, and costs. The app infers your business type and auto-generates a complete business model canvas with testable hypotheses.
+- **Business Model Canvas** — Interactive 9-element canvas (Customer Segments, Value Proposition, Channels, Relationships, Revenue Streams, Key Resources, Activities, Partners, Cost Structure). Click to edit, add, or remove items.
+- **Hypothesis Tracker** — Lean Startup-style hypothesis testing. Each assumption gets a target metric. Log actual data over time, see progress bars and sparklines, and mark hypotheses as validated, invalidated, or pivoted.
+- **Smart Inference** — Keyword-based business type detection suggests relevant customer segments, channels, revenue models, and costs for any business.
+- **No backend required** — Everything runs in the browser using localStorage. No accounts, no server, no database.
+
+## Run Locally
+
+Just open the file in your browser — no build step, no server needed:
 
 ```bash
-cd oxo-tracker
-npm install    # only needed first time
-npm start
+open docs/index.html
+# or on Linux:
+xdg-open docs/index.html
 ```
 
-Open **http://localhost:3000**
+Or use any static file server:
 
-If migrating from v2, delete the old `oxo-data.sqlite` first (or let it auto-migrate your opportunities into archetypes).
+```bash
+cd docs
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
 
-## What Changed: Simulator, Not CRM
+## Deploy on GitHub Pages
 
-This is no longer a CRM for tracking individual deals. It's a **strategic simulator** that answers:
+1. Push the repository to GitHub.
+2. Go to **Settings → Pages** in your GitHub repository.
+3. Under **Source**, select **Deploy from a branch**.
+4. Set the branch to `main` (or your branch) and the folder to `/docs`.
+5. Click **Save**.
+6. Your site will be live at `https://<username>.github.io/BMT/` within a few minutes.
 
-- Given a mix of engagement types, what does OxO look like at scale?
-- How many people do we need to hire, and when?
-- How many leads must the sales funnel produce?
-- What's the revenue at risk if gain-share doesn't pay out?
-- When does guaranteed revenue cover fixed costs?
+## Test It
 
-## Core Concepts
+1. **First visit** → The wizard starts automatically. Walk through all 8 steps.
+2. **Canvas** → After the wizard, click "Canvas" in the nav. You should see your business model laid out in the standard BMC grid. Click items to edit, use "+ Add" to add new ones.
+3. **Tracker** → Click "Tracker" in the nav. You'll see auto-generated hypotheses with targets. Click "Log Data" on any hypothesis to enter actual metrics. Watch progress bars and sparklines update.
+4. **Persistence** → Refresh the page. All data should persist via localStorage.
+5. **Export/Import** → Go to Settings, click "Export Data" to download a JSON backup. Use "Import Data" to restore.
+6. **Reset** → In Settings, "Reset Everything" clears all data and restarts the wizard.
 
-**Engagement Archetypes** — types of engagements (not individual deals). E.g. "Mid-market 6-month transformation" or "PE post-merger sprint". Each has a delivery model, pricing, and a volume plan (how many per year, years 1–5).
+## Tech Stack
 
-**Project Delivery Model** — every archetype follows the structured OxO delivery: kickoff retreat → weekly check-ins → monthly workshops → quarterly offsites → closing workshop. Costs are calculated automatically.
+- Vanilla HTML, CSS, JavaScript — no frameworks, no build tools
+- localStorage for persistence
+- Responsive design (works on mobile)
+- Static site — deployable anywhere (GitHub Pages, Netlify, any web server)
 
-**Two Pricing Models** — per archetype: Base+Upside (base fee + gain-share) or Outcome-Based Fixed (% of client upside as fixed price).
+## File Structure
 
-**5-Year Simulation** — the simulator projects revenue, costs, profit, cash, team size, hiring needs, capacity utilization, sales funnel requirements, and downside scenarios across 5 years.
+```
+docs/                  # GitHub Pages root
+├── index.html         # App shell + all CSS
+├── app.js             # Router, navigation, settings
+├── wizard.js          # Onboarding wizard + inference engine
+├── canvas.js          # Business Model Canvas view
+├── tracker.js         # Hypothesis tracking dashboard
+└── store.js           # localStorage persistence layer
 
-**Growth Model** — win rate, repeat rate, referral rate, sales cycle, utilization target. These drive how many cold leads you need and when hiring triggers.
+archive/               # Original OxO consulting simulator (archived)
+```
 
-## Tabs
+## Archive
 
-1. **5-Year Projection** — the main view. Revenue, profit, team evolution, sales funnel.
-2. **Engagement Archetypes** — define and tune your engagement types.
-3. **Cost Structure** — team, salaries, overhead, growth parameters.
-4. **Scaling & Capacity** — flywheel dynamics, capacity constraints, unit economics, worst-case scenarios.
+The `archive/` folder contains the original OxO Business Model Simulator v3 — a Node.js + Express app with a 10-year P&L projection engine built specifically for a consulting firm. It served as the prototype and inspiration for this general-purpose tool.
