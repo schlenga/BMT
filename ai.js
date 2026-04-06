@@ -83,6 +83,167 @@ var AI = (function() {
     'Improve customer retention'
   ];
 
+  // ── Adaptive Terminology ──
+  var TERMINOLOGY = {
+    restaurant: {
+      customerSegments: 'Your Guests',
+      valueProp: 'Why They Come Back',
+      channels: 'How They Find You',
+      customerRelationships: 'Guest Experience',
+      revenueStreams: 'How You Earn',
+      keyResources: 'What You Need',
+      keyActivities: 'Daily Operations',
+      keyPartners: 'Your Partners',
+      costStructure: 'Running Costs',
+      customers: 'guests',
+      products: 'dishes & drinks',
+      revenue: 'covers & orders',
+      team: 'staff',
+      proudPrompt: 'What makes your place special?',
+      customersPrompt: 'Who are your best guests?',
+      goalPrompt: 'Where do you want to take this?',
+      concernPrompt: 'What keeps you up at night about the business?'
+    },
+    retail: {
+      customerSegments: 'Your Shoppers',
+      valueProp: 'Why They Choose You',
+      channels: 'Where They Find You',
+      customerRelationships: 'Shopper Experience',
+      revenueStreams: 'Revenue Streams',
+      keyResources: 'What You Need',
+      keyActivities: 'Key Operations',
+      keyPartners: 'Your Partners',
+      costStructure: 'Store Costs',
+      customers: 'shoppers',
+      products: 'products',
+      revenue: 'sales',
+      team: 'team',
+      proudPrompt: 'What makes your store stand out?',
+      customersPrompt: 'Who are your best shoppers?',
+      goalPrompt: 'What\'s your biggest goal for the next 6 months?',
+      concernPrompt: 'What\'s the biggest risk you see?'
+    },
+    service: {
+      customerSegments: 'Your Clients',
+      valueProp: 'Your Edge',
+      channels: 'How Clients Find You',
+      customerRelationships: 'Client Relations',
+      revenueStreams: 'Revenue Streams',
+      keyResources: 'Key Resources',
+      keyActivities: 'Core Services',
+      keyPartners: 'Partners & Network',
+      costStructure: 'Operating Costs',
+      customers: 'clients',
+      products: 'services',
+      revenue: 'engagements',
+      team: 'team',
+      proudPrompt: 'What makes your service stand out?',
+      customersPrompt: 'Who are your best clients?',
+      goalPrompt: 'What\'s your biggest goal for the next 6 months?',
+      concernPrompt: 'What\'s keeping you up at night?'
+    },
+    saas: {
+      customerSegments: 'Your Users',
+      valueProp: 'Core Value',
+      channels: 'Acquisition Channels',
+      customerRelationships: 'User Experience',
+      revenueStreams: 'Revenue Model',
+      keyResources: 'Tech & Team',
+      keyActivities: 'Build & Ship',
+      keyPartners: 'Integrations & Partners',
+      costStructure: 'Burn Rate',
+      customers: 'users',
+      products: 'features & plans',
+      revenue: 'MRR',
+      team: 'engineers',
+      proudPrompt: 'What\'s your unfair advantage?',
+      customersPrompt: 'Who are your power users?',
+      goalPrompt: 'What does growth look like for you?',
+      concernPrompt: 'What\'s the biggest risk to the product?'
+    },
+    ecommerce: {
+      customerSegments: 'Your Buyers',
+      valueProp: 'Why They Buy From You',
+      channels: 'Where They Find You',
+      customerRelationships: 'Buyer Experience',
+      revenueStreams: 'Sales Channels',
+      keyResources: 'Supply & Logistics',
+      keyActivities: 'Fulfillment & Marketing',
+      keyPartners: 'Suppliers & Platforms',
+      costStructure: 'Cost of Goods & Ops',
+      customers: 'buyers',
+      products: 'products',
+      revenue: 'orders',
+      team: 'team',
+      proudPrompt: 'What makes your store different?',
+      customersPrompt: 'Who are your best buyers?',
+      goalPrompt: 'What\'s your growth target?',
+      concernPrompt: 'What\'s the biggest challenge right now?'
+    },
+    subscription: {
+      customerSegments: 'Your Members',
+      valueProp: 'Why They Stay',
+      channels: 'How Members Find You',
+      customerRelationships: 'Member Experience',
+      revenueStreams: 'Recurring Revenue',
+      keyResources: 'Content & Curation',
+      keyActivities: 'Curation & Delivery',
+      keyPartners: 'Sourcing Partners',
+      costStructure: 'Cost per Member',
+      customers: 'members',
+      products: 'offerings',
+      revenue: 'subscriptions',
+      team: 'team',
+      proudPrompt: 'What keeps your members coming back?',
+      customersPrompt: 'Who are your most engaged members?',
+      goalPrompt: 'What does success look like in 6 months?',
+      concernPrompt: 'What\'s the biggest risk to retention?'
+    }
+  };
+
+  var DEFAULT_TERMINOLOGY = {
+    customerSegments: 'Customer Segments',
+    valueProp: 'Value Proposition',
+    channels: 'Channels',
+    customerRelationships: 'Customer Relations',
+    revenueStreams: 'Revenue Streams',
+    keyResources: 'Key Resources',
+    keyActivities: 'Key Activities',
+    keyPartners: 'Key Partners',
+    costStructure: 'Cost Structure',
+    customers: 'customers',
+    products: 'products',
+    revenue: 'revenue',
+    team: 'team',
+    proudPrompt: 'What are you most proud of about your business?',
+    customersPrompt: 'Who are your best customers?',
+    goalPrompt: 'What\'s your biggest goal for the next 6 months?',
+    concernPrompt: 'What keeps you up at night?'
+  };
+
+  function getTerminology(type) {
+    var base = {};
+    var k;
+    for (k in DEFAULT_TERMINOLOGY) base[k] = DEFAULT_TERMINOLOGY[k];
+    var override = TERMINOLOGY[type];
+    if (override) {
+      for (k in override) base[k] = override[k];
+    }
+    // Check if store has custom terminology from Claude
+    var stored = Store.getTerminology ? Store.getTerminology() : null;
+    if (stored && stored.labels) {
+      for (k in stored.labels) {
+        if (stored.labels[k]) base[k] = stored.labels[k];
+      }
+    }
+    return base;
+  }
+
+  function getTerm(type, key) {
+    var terms = getTerminology(type);
+    return terms[key] || DEFAULT_TERMINOLOGY[key] || key;
+  }
+
   function getSuggestions(pool, type) {
     var common = pool._common || [];
     var specific = pool[type] || [];
@@ -93,6 +254,173 @@ var AI = (function() {
       if (!seen[key]) { seen[key] = true; result.push(item); }
     });
     return result;
+  }
+
+  // ── Color Extraction & Palette ──
+  function extractColorsFromHTML(html) {
+    var colors = [];
+    // theme-color meta tag
+    var themeMeta = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["'](#[0-9a-fA-F]{3,8})["']/i);
+    if (!themeMeta) themeMeta = html.match(/<meta[^>]*content=["'](#[0-9a-fA-F]{3,8})["'][^>]*name=["']theme-color["']/i);
+    if (themeMeta) colors.push(themeMeta[1]);
+
+    // msapplication-TileColor
+    var tileMeta = html.match(/<meta[^>]*name=["']msapplication-TileColor["'][^>]*content=["'](#[0-9a-fA-F]{3,8})["']/i);
+    if (tileMeta) colors.push(tileMeta[1]);
+
+    // CSS custom properties that look like brand colors
+    var brandVarRe = /--(?:brand|primary|main|accent|theme)[^:]*:\s*(#[0-9a-fA-F]{3,8})/gi;
+    var m;
+    while ((m = brandVarRe.exec(html)) !== null) colors.push(m[1]);
+
+    // Common CSS background-color and color values (skip black/white/gray)
+    var cssColorRe = /(?:background-color|background|color)\s*:\s*(#[0-9a-fA-F]{3,8})/gi;
+    while ((m = cssColorRe.exec(html)) !== null) {
+      var c = m[1].toLowerCase();
+      if (c !== '#fff' && c !== '#ffffff' && c !== '#000' && c !== '#000000' &&
+          c !== '#333' && c !== '#333333' && c !== '#666' && c !== '#999' && c !== '#ccc') {
+        colors.push(m[1]);
+      }
+    }
+
+    // Deduplicate
+    var seen = {};
+    return colors.filter(function(c) {
+      var k = c.toLowerCase();
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    }).slice(0, 6);
+  }
+
+  function hexToHSL(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    var r = parseInt(hex.substr(0,2),16)/255;
+    var g = parseInt(hex.substr(2,2),16)/255;
+    var b = parseInt(hex.substr(4,2),16)/255;
+    var max = Math.max(r,g,b), min = Math.min(r,g,b);
+    var h=0, s=0, l=(max+min)/2;
+    if (max !== min) {
+      var d = max-min;
+      s = l>0.5 ? d/(2-max-min) : d/(max+min);
+      if (max===r) h=((g-b)/d+(g<b?6:0))/6;
+      else if (max===g) h=((b-r)/d+2)/6;
+      else h=((r-g)/d+4)/6;
+    }
+    return {h:Math.round(h*360), s:Math.round(s*100), l:Math.round(l*100)};
+  }
+
+  function hslToHex(h, s, l) {
+    h /= 360; s /= 100; l /= 100;
+    var r, g, b;
+    if (s === 0) { r=g=b=l; } else {
+      function hue2rgb(p,q,t) {
+        if(t<0) t+=1; if(t>1) t-=1;
+        if(t<1/6) return p+(q-p)*6*t;
+        if(t<1/2) return q;
+        if(t<2/3) return p+(q-p)*(2/3-t)*6;
+        return p;
+      }
+      var q = l<0.5 ? l*(1+s) : l+s-l*s;
+      var p = 2*l-q;
+      r = hue2rgb(p,q,h+1/3);
+      g = hue2rgb(p,q,h);
+      b = hue2rgb(p,q,h-1/3);
+    }
+    function toHex(x) { var hex = Math.round(x*255).toString(16); return hex.length===1?'0'+hex:hex; }
+    return '#'+toHex(r)+toHex(g)+toHex(b);
+  }
+
+  function generatePalette(primary, secondary) {
+    if (!primary) return null;
+    var hsl = hexToHSL(primary);
+
+    var palette = {
+      accent: primary,
+      accent2: hslToHex(hsl.h, Math.min(hsl.s+5, 100), Math.max(hsl.l-15, 15)),
+      accentLight: hslToHex(hsl.h, Math.max(hsl.s-40, 10), 95),
+      bg: hslToHex(hsl.h, 8, 97),
+      bg2: hslToHex(hsl.h, 10, 93),
+      surface: '#ffffff',
+      surface2: hslToHex(hsl.h, 6, 98),
+      text: hslToHex(hsl.h, 15, 16),
+      text2: hslToHex(hsl.h, 10, 40),
+      text3: hslToHex(hsl.h, 8, 60),
+      border: hslToHex(hsl.h, 10, 88),
+      border2: hslToHex(hsl.h, 12, 82),
+      shadow: 'rgba(' + Math.round(hsl.h/360*45) + ',' + Math.round(hsl.h/360*42) + ',' + Math.round(hsl.h/360*38) + ', 0.06)',
+      shadow2: 'rgba(' + Math.round(hsl.h/360*45) + ',' + Math.round(hsl.h/360*42) + ',' + Math.round(hsl.h/360*38) + ', 0.12)'
+    };
+
+    if (secondary) {
+      var hsl2 = hexToHSL(secondary);
+      // Use secondary for some accents if it's sufficiently different
+      if (Math.abs(hsl.h - hsl2.h) > 30) {
+        palette.accent2 = secondary;
+      }
+    }
+
+    return palette;
+  }
+
+  function applyTheme(palette) {
+    if (!palette) return;
+    var root = document.documentElement;
+    var map = {
+      '--accent': palette.accent,
+      '--accent2': palette.accent2,
+      '--accent-light': palette.accentLight,
+      '--bg': palette.bg,
+      '--bg2': palette.bg2,
+      '--surface': palette.surface,
+      '--surface2': palette.surface2,
+      '--text': palette.text,
+      '--text2': palette.text2,
+      '--text3': palette.text3,
+      '--border': palette.border,
+      '--border2': palette.border2,
+      '--shadow': palette.shadow,
+      '--shadow2': palette.shadow2
+    };
+
+    // Add transition class for smooth color shift
+    document.body.classList.add('theme-transitioning');
+    for (var prop in map) {
+      if (map[prop]) root.style.setProperty(prop, map[prop]);
+    }
+    setTimeout(function() {
+      document.body.classList.remove('theme-transitioning');
+    }, 700);
+
+    // Persist
+    if (Store.saveTheme) Store.saveTheme(palette);
+  }
+
+  function restoreTheme() {
+    var palette = Store.getTheme ? Store.getTheme() : null;
+    if (palette && palette.accent) {
+      var root = document.documentElement;
+      var map = {
+        '--accent': palette.accent,
+        '--accent2': palette.accent2,
+        '--accent-light': palette.accentLight,
+        '--bg': palette.bg,
+        '--bg2': palette.bg2,
+        '--surface': palette.surface,
+        '--surface2': palette.surface2,
+        '--text': palette.text,
+        '--text2': palette.text2,
+        '--text3': palette.text3,
+        '--border': palette.border,
+        '--border2': palette.border2,
+        '--shadow': palette.shadow,
+        '--shadow2': palette.shadow2
+      };
+      for (var prop in map) {
+        if (map[prop]) root.style.setProperty(prop, map[prop]);
+      }
+    }
   }
 
   // ── Claude API ──
@@ -187,23 +515,30 @@ var AI = (function() {
           });
       })
       .then(function(html) {
-        // Got HTML — send to Claude for extraction
+        // Got HTML — extract colors from CSS before stripping
+        var htmlColors = extractColorsFromHTML(html);
         var text = stripHTML(html);
         if (!isAvailable()) {
           // No AI: keyword-detect from website text
           var type = detectType(text);
-          return { ok: true, source: 'keywords', data: { description: text.slice(0, 200), type: type } };
+          return { ok: true, source: 'keywords', data: { description: text.slice(0, 200), type: type }, colors: htmlColors };
         }
+        var colorHint = htmlColors.length > 0 ? '\n\nCSS/meta colors found on the page: ' + htmlColors.join(', ') : '';
         return callClaude([{
           role: 'user',
-          content: 'Here is the text content from a business website at ' + url + ':\n\n' + text + '\n\nExtract key business information and return JSON.'
+          content: 'Here is the text content from a business website at ' + url + ':\n\n' + text + colorHint + '\n\nExtract key business information and return JSON.'
         }], {
-          system: 'You are analyzing a business website. Return ONLY valid JSON with these fields:\n{\n  "businessName": "string",\n  "description": "1-2 sentence summary",\n  "type": "restaurant|retail|service|saas|ecommerce|subscription",\n  "valueProposition": "what makes them special",\n  "customerSegments": ["segment1", "segment2"],\n  "products": ["product/service 1"],\n  "channels": ["channel1"],\n  "tone": "how they present themselves"\n}\nUse null for uncertain fields.',
+          system: 'You analyze business websites. Return ONLY valid JSON:\n{\n  "businessName": "string",\n  "description": "1-2 sentence summary",\n  "type": "restaurant|retail|service|saas|ecommerce|subscription",\n  "valueProposition": "what makes them special",\n  "customerSegments": ["segment1", "segment2", "segment3"],\n  "products": ["product/service 1"],\n  "channels": ["channel1"],\n  "tone": "casual|professional|friendly|luxurious|technical",\n  "brandColors": {\n    "primary": "#hex or null",\n    "secondary": "#hex or null"\n  },\n  "greeting": "A warm one-sentence welcome for the business owner, mentioning their business by name"\n}\nFor brandColors: use the CSS colors provided if available, or infer from the brand identity. Use null for uncertain fields.',
           maxTokens: 1024
         }).then(function(result) {
           if (!result.ok) return { ok: false, error: result.error };
           var parsed = parseJSON(result.text);
-          return parsed ? { ok: true, source: 'ai', data: parsed } : { ok: false, error: 'Could not parse response' };
+          if (!parsed) return { ok: false, error: 'Could not parse response' };
+          // Merge HTML-extracted colors as fallback
+          if ((!parsed.brandColors || !parsed.brandColors.primary) && htmlColors.length > 0) {
+            parsed.brandColors = { primary: htmlColors[0], secondary: htmlColors[1] || null };
+          }
+          return { ok: true, source: 'ai', data: parsed };
         });
       })
       .catch(function() {
@@ -213,7 +548,7 @@ var AI = (function() {
           role: 'user',
           content: 'The business website is at ' + url + '. Based on your knowledge, describe what this business does, who its customers are, and what it offers. If you don\'t know, say so. Return the same JSON format.'
         }], {
-          system: 'You are analyzing a business. Return ONLY valid JSON with fields: businessName, description, type, valueProposition, customerSegments[], products[], channels[], tone. Use null for fields you cannot determine.',
+          system: 'You analyze businesses. Return ONLY valid JSON:\n{\n  "businessName": "string",\n  "description": "1-2 sentence summary",\n  "type": "restaurant|retail|service|saas|ecommerce|subscription",\n  "valueProposition": "what makes them special",\n  "customerSegments": ["segment1", "segment2"],\n  "products": ["product/service 1"],\n  "channels": ["channel1"],\n  "tone": "casual|professional|friendly|luxurious|technical",\n  "brandColors": { "primary": "#hex or null", "secondary": "#hex or null" },\n  "greeting": "A warm one-sentence welcome for the business owner"\n}\nUse null for uncertain fields.',
           maxTokens: 1024
         }).then(function(result) {
           if (!result.ok) return { ok: false, fallback: 'manual' };
@@ -372,10 +707,20 @@ var AI = (function() {
     CHANNELS: CHANNELS,
     COSTS: COSTS,
     GOALS: GOALS,
+    TERMINOLOGY: TERMINOLOGY,
+    DEFAULT_TERMINOLOGY: DEFAULT_TERMINOLOGY,
     detectType: detectType,
     getSuggestions: getSuggestions,
+    getTerminology: getTerminology,
+    getTerm: getTerm,
     isAvailable: isAvailable,
     callClaude: callClaude,
+    extractColorsFromHTML: extractColorsFromHTML,
+    hexToHSL: hexToHSL,
+    hslToHex: hslToHex,
+    generatePalette: generatePalette,
+    applyTheme: applyTheme,
+    restoreTheme: restoreTheme,
     analyzeWebsite: analyzeWebsite,
     generateHypotheses: generateHypotheses,
     keywordFallbackHypotheses: keywordFallbackHypotheses,

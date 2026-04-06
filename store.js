@@ -7,7 +7,9 @@ var Store = (function() {
     canvas: 'bmt_canvas',
     hypotheses: 'bmt_hypotheses',
     wizardComplete: 'bmt_wizard_complete',
-    onboardingData: 'bmt_onboarding_data'
+    onboardingData: 'bmt_onboarding_data',
+    theme: 'bmt_theme',
+    terminology: 'bmt_terminology'
   };
 
   function uid() {
@@ -127,6 +129,14 @@ var Store = (function() {
   function isWizardComplete() { return get(KEYS.wizardComplete) === true; }
   function setWizardComplete() { set(KEYS.wizardComplete, true); }
 
+  // Theme (brand colors palette)
+  function getTheme() { return get(KEYS.theme); }
+  function saveTheme(theme) { set(KEYS.theme, theme); }
+
+  // Terminology (adaptive labels)
+  function getTerminology() { return get(KEYS.terminology); }
+  function saveTerminology(terms) { set(KEYS.terminology, terms); }
+
   // Onboarding progress (resume on browser close)
   function getOnboardingData() { return get(KEYS.onboardingData); }
   function saveOnboardingData(data) { set(KEYS.onboardingData, data); }
@@ -177,6 +187,10 @@ var Store = (function() {
     addActual: addActual,
     isWizardComplete: isWizardComplete,
     setWizardComplete: setWizardComplete,
+    getTheme: getTheme,
+    saveTheme: saveTheme,
+    getTerminology: getTerminology,
+    saveTerminology: saveTerminology,
     getOnboardingData: getOnboardingData,
     saveOnboardingData: saveOnboardingData,
     clearOnboardingData: clearOnboardingData,

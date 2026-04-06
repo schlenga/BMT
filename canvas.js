@@ -3,7 +3,7 @@
 
 var Canvas = (function() {
 
-  var ELEMENTS = [
+  var ELEMENTS_BASE = [
     { key: 'keyPartners', label: 'Key Partners', icon: '🤝', hint: 'Who helps you deliver?' },
     { key: 'keyActivities', label: 'Key Activities', icon: '⚡', hint: 'What do you do daily?' },
     { key: 'keyResources', label: 'Key Resources', icon: '🔑', hint: 'What do you need?' },
@@ -15,12 +15,30 @@ var Canvas = (function() {
     { key: 'revenueStreams', label: 'Revenue Streams', icon: '💰', hint: 'How do you earn money?' }
   ];
 
+  function getElements() {
+    var biz = Store.getBusiness();
+    var type = biz ? biz.type : 'service';
+    var t = AI.getTerminology(type);
+    return ELEMENTS_BASE.map(function(el) {
+      return {
+        key: el.key,
+        label: t[el.key] || el.label,
+        icon: el.icon,
+        hint: el.hint
+      };
+    });
+  }
+
+  // Backwards-compatible reference
+  var ELEMENTS = ELEMENTS_BASE;
+
   var editingItem = null; // { element, id }
 
   function render(container) {
     var canvas = Store.getCanvas();
     var hyps = Store.getHypotheses();
     var biz = Store.getBusiness();
+    var elements = getElements();
 
     var h = '';
     h += '<div class="canvas-header">';
@@ -31,21 +49,21 @@ var Canvas = (function() {
     h += '<div class="bmc-grid">';
 
     // Row 1: Partners | Activities+Resources | Value Prop | Relationships+Channels | Segments
-    h += '<div class="bmc-cell bmc-tall bmc-partners">' + renderCell('keyPartners', canvas, hyps) + '</div>';
+    h += '<div class="bmc-cell bmc-tall bmc-partners">' + renderCell('keyPartners', canvas, hyps, elements) + '</div>';
     h += '<div class="bmc-cell-split">';
-    h += '<div class="bmc-cell bmc-half">' + renderCell('keyActivities', canvas, hyps) + '</div>';
-    h += '<div class="bmc-cell bmc-half">' + renderCell('keyResources', canvas, hyps) + '</div>';
+    h += '<div class="bmc-cell bmc-half">' + renderCell('keyActivities', canvas, hyps, elements) + '</div>';
+    h += '<div class="bmc-cell bmc-half">' + renderCell('keyResources', canvas, hyps, elements) + '</div>';
     h += '</div>';
-    h += '<div class="bmc-cell bmc-tall bmc-value">' + renderCell('valueProp', canvas, hyps) + '</div>';
+    h += '<div class="bmc-cell bmc-tall bmc-value">' + renderCell('valueProp', canvas, hyps, elements) + '</div>';
     h += '<div class="bmc-cell-split">';
-    h += '<div class="bmc-cell bmc-half">' + renderCell('customerRelationships', canvas, hyps) + '</div>';
-    h += '<div class="bmc-cell bmc-half">' + renderCell('channels', canvas, hyps) + '</div>';
+    h += '<div class="bmc-cell bmc-half">' + renderCell('customerRelationships', canvas, hyps, elements) + '</div>';
+    h += '<div class="bmc-cell bmc-half">' + renderCell('channels', canvas, hyps, elements) + '</div>';
     h += '</div>';
-    h += '<div class="bmc-cell bmc-tall bmc-segments">' + renderCell('customerSegments', canvas, hyps) + '</div>';
+    h += '<div class="bmc-cell bmc-tall bmc-segments">' + renderCell('customerSegments', canvas, hyps, elements) + '</div>';
 
     // Row 2: Costs | Revenue
-    h += '<div class="bmc-cell bmc-wide bmc-costs">' + renderCell('costStructure', canvas, hyps) + '</div>';
-    h += '<div class="bmc-cell bmc-wide bmc-revenue">' + renderCell('revenueStreams', canvas, hyps) + '</div>';
+    h += '<div class="bmc-cell bmc-wide bmc-costs">' + renderCell('costStructure', canvas, hyps, elements) + '</div>';
+    h += '<div class="bmc-cell bmc-wide bmc-revenue">' + renderCell('revenueStreams', canvas, hyps, elements) + '</div>';
 
     h += '</div>'; // end bmc-grid
 
@@ -53,8 +71,8 @@ var Canvas = (function() {
     bindCanvasEvents(container);
   }
 
-  function renderCell(elementKey, canvas, hyps) {
-    var el = ELEMENTS.find(function(e) { return e.key === elementKey; });
+  function renderCell(elementKey, canvas, hyps, elements) {
+    var el = elements.find(function(e) { return e.key === elementKey; });
     var items = canvas[elementKey] || [];
     var hypCount = hyps.filter(function(h) { return h.canvasElement === elementKey; }).length;
 
@@ -150,7 +168,8 @@ var Canvas = (function() {
     container.querySelectorAll('.bmc-add').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var elementKey = this.dataset.element;
-        var el = ELEMENTS.find(function(e) { return e.key === elementKey; });
+        var elements = getElements();
+        var el = elements.find(function(e) { return e.key === elementKey; });
         var text = prompt('Add to ' + el.label + ':');
         if (text && text.trim()) {
           Store.addCanvasItem(elementKey, text.trim());

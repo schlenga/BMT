@@ -1,14 +1,17 @@
-// wizard.js — Conversational split-screen onboarding
+// wizard.js — Card-based workspace assembly onboarding ("Business Butler")
 'use strict';
 
 var Wizard = (function() {
 
   // ── State ──
-  var step = 0;
-  var messages = []; // { type: 'system'|'user', content: string, stepId: string }
+  var stage = 'url'; // 'url' | 'analyzing' | 'workspace' | 'launching'
+  var cardStage = 'A'; // 'A' | 'B' | 'C'
+  var confirmed = { identity: false, customers: false, economics: false, ambition: false };
   var data = {
     websiteUrl: '',
     websiteData: null,
+    brandColors: null,
+    greeting: '',
     name: '',
     type: 'service',
     description: '',
@@ -20,230 +23,338 @@ var Wizard = (function() {
     goal: '',
     concern: '',
     aiHypotheses: [],
-    selectedHypIds: null // null = all selected
+    selectedHypIds: null
   };
   var loading = false;
   var previewExpanded = false;
   var container = null;
 
-  var STEPS = [
-    { id: 'website', prompt: 'Hey! Let\'s map out your business together. Got a website? Drop the URL and I\'ll take a head start.' },
-    { id: 'proud', prompt: 'What are you most proud of about your business? Could be your product, your approach, your customers \u2014 anything that makes you excited.' },
-    { id: 'customers', prompt: 'Who are your best customers? The ones who really love what you do.' },
-    { id: 'economics', prompt: 'How\'s business going right now? Just ballpark numbers \u2014 no judgment!' },
-    { id: 'goal', prompt: 'What\'s your biggest goal for the next 6 months?' },
-    { id: 'concerns', prompt: 'Last one before I build your hypotheses. What keeps you up at night about this business?' },
-    { id: 'hypotheses', prompt: 'Based on everything you\'ve told me, here are hypotheses to test. These are specific to YOUR business.' }
-  ];
+  function terms() {
+    return AI.getTerminology(data.type);
+  }
 
-  // ── Rendering ──
+  // ── Main Render ──
   function render(cont) {
     container = cont;
-    var h = '<div class="onboarding">';
-    h += '<div class="onboarding-conv">';
-    h += '<div class="conv-thread" id="conv-thread">';
-    h += renderMessages();
-    h += '</div>';
-    h += renderInputArea();
-    h += '<div class="conv-progress"><div class="conv-progress-bar" style="width:' + Math.round(((step + 1) / STEPS.length) * 100) + '%"></div></div>';
-    h += '</div>';
-    h += '<div class="onboarding-preview' + (previewExpanded ? ' expanded' : '') + '" id="onboarding-preview">';
-    h += '<div class="preview-toggle" id="preview-toggle"></div>';
-    h += renderPreview();
-    h += '</div>';
-    h += '</div>';
-    cont.innerHTML = h;
-    bindEvents();
-    scrollThread();
+    switch (stage) {
+      case 'url': renderUrlStage(); break;
+      case 'analyzing': renderAnalyzingStage(); break;
+      case 'workspace': renderWorkspaceStage(); break;
+      case 'launching': renderLaunchingStage(); break;
+    }
   }
 
-  function renderMessages() {
-    var h = '';
-    // Show all past messages
-    messages.forEach(function(msg) {
-      if (msg.type === 'system') {
-        h += '<div class="conv-msg conv-system"><div class="conv-avatar">BMT</div><div class="conv-bubble">' + msg.content + '</div></div>';
-      } else {
-        h += '<div class="conv-msg conv-user"><div class="conv-avatar">You</div><div class="conv-bubble conv-answered">' + msg.content + '</div></div>';
-      }
+  // ── Phase 1: Grand Entrance ──
+  function renderUrlStage() {
+    var h = '<div class="ob-entrance">';
+    h += '<div class="ob-entrance-content">';
+    h += '<div class="ob-logo">BMT</div>';
+    h += '<h1 class="ob-headline">Your business cockpit starts here</h1>';
+    h += '<p class="ob-subline">Paste your website URL and watch your workspace come to life</p>';
+    h += '<div class="ob-url-wrap">';
+    h += '<input class="ob-url-input" id="ob-url" type="url" placeholder="https://yourbusiness.com" value="' + esc(data.websiteUrl) + '" autofocus>';
+    h += '<button class="ob-url-btn" id="btn-analyze">Analyze</button>';
+    h += '</div>';
+    h += '<button class="ob-skip-link" id="btn-skip">I don\'t have a website — set up manually</button>';
+    h += '</div>';
+    h += '</div>';
+    container.innerHTML = h;
+
+    var urlInput = document.getElementById('ob-url');
+    var analyzeBtn = document.getElementById('btn-analyze');
+    var skipBtn = document.getElementById('btn-skip');
+
+    analyzeBtn.addEventListener('click', function() { analyzeWebsite(); });
+    urlInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') analyzeWebsite();
     });
-    // Current step system message (if not already added)
-    var s = STEPS[step];
-    if (!messages.length || messages[messages.length - 1].stepId !== s.id || messages[messages.length - 1].type !== 'system') {
-      var prompt = s.prompt;
-      // Customize prompt based on website data
-      if (s.id === 'proud' && data.websiteData && data.websiteData.description) {
-        prompt = 'From your site it looks like <strong>' + esc(data.websiteData.description) + '</strong>. ' + prompt;
-      }
-      h += '<div class="conv-msg conv-system"><div class="conv-avatar">BMT</div><div class="conv-bubble">' + prompt + '</div></div>';
-    }
-    // Typing indicator
-    if (loading) {
-      h += '<div class="conv-msg conv-system conv-typing"><div class="conv-avatar">BMT</div><div class="conv-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>';
-    }
-    return h;
+    skipBtn.addEventListener('click', function() { skipToManual(); });
   }
 
-  function renderInputArea() {
-    var s = STEPS[step];
-    var h = '<div class="conv-input-area" id="conv-input">';
+  // ── Phase 1b: Analyzing Animation ──
+  function renderAnalyzingStage() {
+    var h = '<div class="ob-entrance ob-analyzing">';
+    h += '<div class="ob-entrance-content">';
+    h += '<div class="ob-logo">BMT</div>';
+    h += '<div class="ob-assembling">';
+    h += '<div class="ob-pulse-ring"></div>';
+    h += '<div class="ob-pulse-ring ob-ring-2"></div>';
+    h += '<div class="ob-pulse-ring ob-ring-3"></div>';
+    h += '<p class="ob-analyzing-text">Analyzing your business...</p>';
+    h += '</div>';
+    h += '</div>';
+    h += '</div>';
+    container.innerHTML = h;
+  }
 
+  // ── Phase 2: Workspace with Staged Cards ──
+  function renderWorkspaceStage() {
+    var t = terms();
+    var h = '<div class="ob-workspace">';
+
+    // Left: Refinement cards
+    h += '<div class="ob-cards-panel">';
+
+    // Greeting
+    if (data.greeting) {
+      h += '<div class="ob-greeting anim-fade-in">' + esc(data.greeting) + '</div>';
+    } else if (data.name) {
+      h += '<div class="ob-greeting anim-fade-in">Let\'s set up the perfect workspace for ' + esc(data.name) + '</div>';
+    } else {
+      h += '<div class="ob-greeting anim-fade-in">Let\'s build your business cockpit</div>';
+    }
+
+    // Stage A cards (always visible in workspace)
+    h += renderIdentityCard(t);
+    h += renderCustomersCard(t);
+
+    // Stage B cards (revealed after A confirmed)
+    if (cardStage === 'B' || cardStage === 'C') {
+      h += renderEconomicsCard(t);
+      h += renderAmbitionCard(t);
+    }
+
+    // Stage C: hypotheses (revealed after B confirmed)
+    if (cardStage === 'C') {
+      h += renderHypothesesCard(t);
+    }
+
+    // Loading indicator for hypothesis generation
     if (loading) {
-      h += '<div class="wiz-hint" style="text-align:center;margin:0">Thinking...</div>';
+      h += '<div class="ob-card anim-fade-in">';
+      h += '<div class="ob-card-loading"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> Generating hypotheses for your business...</div>';
       h += '</div>';
-      return h;
     }
 
-    switch(s.id) {
-      case 'website':
-        h += '<input class="wiz-input" id="wiz-url" type="url" placeholder="https://yourbusiness.com" value="' + esc(data.websiteUrl) + '">';
-        h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:space-between">';
-        h += '<button class="wiz-btn wiz-btn-back" onclick="Wizard.skipWebsite()">Skip \u2014 no website</button>';
-        h += '<button class="wiz-btn wiz-btn-primary" id="btn-analyze" onclick="Wizard.analyzeWebsite()">Analyze</button>';
-        h += '</div>';
-        break;
+    h += '</div>';
 
-      case 'proud':
-        if (data.websiteData && data.websiteData.businessName && !data.name) {
-          data.name = data.websiteData.businessName;
-        }
-        h += '<div class="wiz-field-group">';
-        h += '<div><div class="wiz-field-label">Business name</div>';
-        h += '<input class="wiz-input" id="wiz-name" placeholder="Your business name" value="' + esc(data.name) + '"></div>';
-        h += '<div><div class="wiz-field-label">What makes you proud?</div>';
-        h += '<textarea class="wiz-textarea" id="wiz-proud" placeholder="e.g. We source the best local ingredients, our customers become friends, we\'ve built something from nothing...">' + esc(data.proudOf) + '</textarea></div>';
-        h += '</div>';
-        h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">';
-        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitProud()">Continue</button>';
-        h += '</div>';
-        break;
+    // Right: Live canvas preview
+    h += '<div class="ob-preview-panel' + (previewExpanded ? ' expanded' : '') + '" id="ob-preview">';
+    h += '<div class="preview-toggle" id="preview-toggle"></div>';
+    h += renderLiveCanvas(t);
+    h += '</div>';
 
-      case 'customers':
-        var type = data.type || 'service';
-        var segs = AI.getSuggestions(AI.SEGMENTS, type);
-        h += '<div class="wiz-chips" id="wiz-segs">';
-        segs.forEach(function(seg) {
-          var active = data.segments.indexOf(seg) >= 0;
-          h += '<span class="wiz-chip' + (active ? ' active' : '') + '" data-val="' + esc(seg) + '">' + esc(seg) + '</span>';
-        });
-        h += '</div>';
-        h += '<input class="wiz-input wiz-add-input" id="wiz-seg-custom" placeholder="Type to add your own and press Enter...">';
-        h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">';
-        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitCustomers()">Continue</button>';
-        h += '</div>';
-        break;
+    h += '</div>';
+    container.innerHTML = h;
+    bindWorkspaceEvents();
+    scrollToLatestCard();
+  }
 
-      case 'economics':
-        h += '<div class="wiz-field-group">';
-        h += '<div><div class="wiz-field-label">Monthly revenue</div>';
-        h += '<select class="wiz-select" id="wiz-revenue">';
-        ['Pre-revenue','$0 - $1K','$1K - $5K','$5K - $20K','$20K - $50K','$50K - $100K','$100K+'].forEach(function(opt) {
-          h += '<option' + (data.revenueRange === opt ? ' selected' : '') + '>' + opt + '</option>';
-        });
-        h += '</select></div>';
-        h += '<div><div class="wiz-field-label">Team size</div>';
-        h += '<select class="wiz-select" id="wiz-team">';
-        ['Just me','2-5','6-15','16-50','50+'].forEach(function(opt) {
-          h += '<option' + (data.teamSize === opt ? ' selected' : '') + '>' + opt + '</option>';
-        });
-        h += '</select></div>';
-        h += '<div><div class="wiz-field-label">Main costs</div>';
-        var costs = AI.getSuggestions(AI.COSTS, data.type);
-        h += '<div class="wiz-chips" id="wiz-costs">';
-        costs.forEach(function(c) {
-          var active = data.costs.indexOf(c) >= 0;
-          h += '<span class="wiz-chip' + (active ? ' active' : '') + '" data-val="' + esc(c) + '">' + esc(c) + '</span>';
-        });
-        h += '</div></div>';
-        h += '</div>';
-        h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">';
-        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitEconomics()">Continue</button>';
-        h += '</div>';
-        break;
+  // ── Refinement Cards ──
+  function renderIdentityCard(t) {
+    var isConfirmed = confirmed.identity;
+    var h = '<div class="ob-card' + (isConfirmed ? ' ob-card-done' : '') + ' anim-slide-up" data-card="identity">';
+    h += '<div class="ob-card-header">';
+    h += '<span class="ob-card-icon">&#9733;</span>';
+    h += '<span class="ob-card-title">' + esc(t.valueProp) + '</span>';
+    if (isConfirmed) h += '<span class="ob-card-check">&#10003;</span>';
+    h += '</div>';
 
-      case 'goal':
-        h += '<div class="wiz-chips" id="wiz-goals">';
-        AI.GOALS.forEach(function(g) {
-          var active = data.goal === g;
-          h += '<span class="wiz-chip' + (active ? ' active' : '') + '" data-val="' + esc(g) + '">' + esc(g) + '</span>';
-        });
-        h += '</div>';
-        h += '<input class="wiz-input wiz-add-input" id="wiz-goal-custom" placeholder="Or type your own goal..." value="' + (AI.GOALS.indexOf(data.goal) < 0 ? esc(data.goal) : '') + '">';
-        h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">';
-        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitGoal()">Continue</button>';
-        h += '</div>';
-        break;
-
-      case 'concerns':
-        h += '<textarea class="wiz-textarea" id="wiz-concern" placeholder="e.g. Not enough customers, cash flow, competition, hiring the right people...">' + esc(data.concern) + '</textarea>';
-        h += '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">';
-        h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.submitConcerns()">Generate Hypotheses</button>';
-        h += '</div>';
-        break;
-
-      case 'hypotheses':
-        if (data.aiHypotheses.length > 0) {
-          h += renderHypothesisToggles();
-          h += '<div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">';
-          h += '<button class="wiz-btn wiz-btn-primary" onclick="Wizard.finish()">Start Tracking</button>';
-          h += '</div>';
-        }
-        break;
+    if (!isConfirmed) {
+      h += '<div class="ob-card-body">';
+      h += '<div class="ob-field">';
+      h += '<label class="ob-field-label">Business name</label>';
+      h += '<input class="ob-input" id="ob-name" placeholder="Your business name" value="' + esc(data.name) + '">';
+      h += '</div>';
+      h += '<div class="ob-field">';
+      h += '<label class="ob-field-label">' + esc(t.proudPrompt) + '</label>';
+      h += '<textarea class="ob-textarea" id="ob-proud" placeholder="Tell us what makes you special...">' + esc(data.proudOf) + '</textarea>';
+      h += '</div>';
+      h += '<div class="ob-card-actions">';
+      h += '<button class="ob-btn ob-btn-confirm" id="btn-confirm-identity">Looks good</button>';
+      h += '</div>';
+      h += '</div>';
+    } else {
+      h += '<div class="ob-card-summary">';
+      h += '<strong>' + esc(data.name) + '</strong>';
+      if (data.proudOf) h += ' &mdash; ' + esc(data.proudOf.length > 80 ? data.proudOf.slice(0, 80) + '...' : data.proudOf);
+      h += ' <button class="ob-edit-btn" data-edit="identity">Edit</button>';
+      h += '</div>';
     }
-
     h += '</div>';
     return h;
   }
 
-  function renderHypothesisToggles() {
-    var h = '';
-    var catColors = { customer: '#e67e22', value: '#2ecc71', revenue: '#3498db', growth: '#9b59b6', cost: '#e74c3c' };
-    data.aiHypotheses.forEach(function(hyp, i) {
-      var selected = !data.selectedHypIds || data.selectedHypIds.indexOf(i) >= 0;
-      h += '<label class="wiz-hyp-toggle' + (selected ? '' : ' deselected') + '">';
-      h += '<input type="checkbox" data-idx="' + i + '"' + (selected ? ' checked' : '') + '>';
-      h += '<div class="wiz-hyp-text">';
-      h += '<span class="wiz-hyp-cat" style="background:' + (catColors[hyp.category] || '#999') + '">' + esc(hyp.category) + '</span>';
-      h += '<div class="wiz-hyp-statement">' + esc(hyp.statement) + '</div>';
-      if (hyp.rationale) h += '<div class="wiz-hyp-detail">' + esc(hyp.rationale) + '</div>';
-      h += '<div class="wiz-hyp-detail">Target: ' + hyp.target + ' ' + esc(hyp.unit || '') + ' \u2014 ' + esc(hyp.timeframe || '') + '</div>';
-      h += '</div></label>';
-    });
-    return h;
-  }
+  function renderCustomersCard(t) {
+    var isConfirmed = confirmed.customers;
+    var type = data.type || 'service';
+    var segs = AI.getSuggestions(AI.SEGMENTS, type);
 
-  // ── Preview Panel ──
-  function renderPreview() {
-    var h = '<div class="preview-header">Your Business Model</div>';
-    h += renderMiniCanvas();
-    if (data.aiHypotheses.length > 0 && step >= 6) {
-      h += '<div class="preview-hyp-section">';
-      h += '<div class="preview-header" style="margin-top:16px">Hypotheses</div>';
-      var catColors = { customer: '#e67e22', value: '#2ecc71', revenue: '#3498db', growth: '#9b59b6', cost: '#e74c3c' };
-      data.aiHypotheses.forEach(function(hyp, i) {
-        var selected = !data.selectedHypIds || data.selectedHypIds.indexOf(i) >= 0;
-        if (!selected) return;
-        h += '<div class="preview-hyp-card" style="animation-delay:' + (i * 0.1) + 's;opacity:1">';
-        h += '<span class="wiz-hyp-cat" style="background:' + (catColors[hyp.category] || '#999') + '">' + esc(hyp.category) + '</span> ';
-        h += esc(hyp.statement);
-        h += '</div>';
+    var h = '<div class="ob-card' + (isConfirmed ? ' ob-card-done' : '') + ' anim-slide-up ob-delay-1" data-card="customers">';
+    h += '<div class="ob-card-header">';
+    h += '<span class="ob-card-icon">&#9829;</span>';
+    h += '<span class="ob-card-title">' + esc(t.customerSegments) + '</span>';
+    if (isConfirmed) h += '<span class="ob-card-check">&#10003;</span>';
+    h += '</div>';
+
+    if (!isConfirmed) {
+      h += '<div class="ob-card-body">';
+      h += '<p class="ob-card-prompt">' + esc(t.customersPrompt) + '</p>';
+      h += '<div class="ob-chips" id="ob-segs">';
+      segs.forEach(function(seg) {
+        var active = data.segments.indexOf(seg) >= 0;
+        h += '<span class="ob-chip' + (active ? ' active' : '') + '" data-val="' + esc(seg) + '">' + esc(seg) + '</span>';
       });
       h += '</div>';
+      h += '<input class="ob-input ob-input-sm" id="ob-seg-custom" placeholder="Type to add your own...">';
+      h += '<div class="ob-card-actions">';
+      h += '<button class="ob-btn ob-btn-confirm" id="btn-confirm-customers"' + (data.segments.length === 0 ? ' disabled' : '') + '>Looks good</button>';
+      h += '</div>';
+      h += '</div>';
+    } else {
+      h += '<div class="ob-card-summary">';
+      h += esc(data.segments.join(', '));
+      h += ' <button class="ob-edit-btn" data-edit="customers">Edit</button>';
+      h += '</div>';
     }
+    h += '</div>';
     return h;
   }
 
-  function renderMiniCanvas() {
+  function renderEconomicsCard(t) {
+    var isConfirmed = confirmed.economics;
+    var costs = AI.getSuggestions(AI.COSTS, data.type);
+
+    var h = '<div class="ob-card' + (isConfirmed ? ' ob-card-done' : '') + ' anim-slide-up" data-card="economics">';
+    h += '<div class="ob-card-header">';
+    h += '<span class="ob-card-icon">&#9670;</span>';
+    h += '<span class="ob-card-title">Economics</span>';
+    if (isConfirmed) h += '<span class="ob-card-check">&#10003;</span>';
+    h += '</div>';
+
+    if (!isConfirmed) {
+      h += '<div class="ob-card-body">';
+      h += '<div class="ob-field-row">';
+
+      h += '<div class="ob-field ob-field-half">';
+      h += '<label class="ob-field-label">Monthly revenue</label>';
+      h += '<select class="ob-select" id="ob-revenue">';
+      ['Pre-revenue','$0 - $1K','$1K - $5K','$5K - $20K','$20K - $50K','$50K - $100K','$100K+'].forEach(function(opt) {
+        h += '<option' + (data.revenueRange === opt ? ' selected' : '') + '>' + opt + '</option>';
+      });
+      h += '</select></div>';
+
+      h += '<div class="ob-field ob-field-half">';
+      h += '<label class="ob-field-label">Team size</label>';
+      h += '<select class="ob-select" id="ob-team">';
+      ['Just me','2-5','6-15','16-50','50+'].forEach(function(opt) {
+        h += '<option' + (data.teamSize === opt ? ' selected' : '') + '>' + opt + '</option>';
+      });
+      h += '</select></div>';
+
+      h += '</div>';
+
+      h += '<div class="ob-field">';
+      h += '<label class="ob-field-label">' + esc(t.costStructure) + '</label>';
+      h += '<div class="ob-chips" id="ob-costs">';
+      costs.forEach(function(c) {
+        var active = data.costs.indexOf(c) >= 0;
+        h += '<span class="ob-chip' + (active ? ' active' : '') + '" data-val="' + esc(c) + '">' + esc(c) + '</span>';
+      });
+      h += '</div></div>';
+
+      h += '<div class="ob-card-actions">';
+      h += '<button class="ob-btn ob-btn-confirm" id="btn-confirm-economics">Looks good</button>';
+      h += '</div>';
+      h += '</div>';
+    } else {
+      h += '<div class="ob-card-summary">';
+      h += esc(data.revenueRange) + ' &bull; Team: ' + esc(data.teamSize);
+      if (data.costs.length) h += ' &bull; ' + esc(data.costs.join(', '));
+      h += ' <button class="ob-edit-btn" data-edit="economics">Edit</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderAmbitionCard(t) {
+    var isConfirmed = confirmed.ambition;
+
+    var h = '<div class="ob-card' + (isConfirmed ? ' ob-card-done' : '') + ' anim-slide-up ob-delay-1" data-card="ambition">';
+    h += '<div class="ob-card-header">';
+    h += '<span class="ob-card-icon">&#9650;</span>';
+    h += '<span class="ob-card-title">Ambition</span>';
+    if (isConfirmed) h += '<span class="ob-card-check">&#10003;</span>';
+    h += '</div>';
+
+    if (!isConfirmed) {
+      h += '<div class="ob-card-body">';
+
+      h += '<div class="ob-field">';
+      h += '<label class="ob-field-label">' + esc(t.goalPrompt) + '</label>';
+      h += '<div class="ob-chips" id="ob-goals">';
+      AI.GOALS.forEach(function(g) {
+        var active = data.goal === g;
+        h += '<span class="ob-chip' + (active ? ' active' : '') + '" data-val="' + esc(g) + '">' + esc(g) + '</span>';
+      });
+      h += '</div>';
+      h += '<input class="ob-input ob-input-sm" id="ob-goal-custom" placeholder="Or type your own..." value="' + (AI.GOALS.indexOf(data.goal) < 0 ? esc(data.goal) : '') + '">';
+      h += '</div>';
+
+      h += '<div class="ob-field">';
+      h += '<label class="ob-field-label">' + esc(t.concernPrompt) + '</label>';
+      h += '<textarea class="ob-textarea ob-textarea-sm" id="ob-concern" placeholder="e.g. Not enough ' + esc(t.customers) + ', cash flow, competition...">' + esc(data.concern) + '</textarea>';
+      h += '</div>';
+
+      h += '<div class="ob-card-actions">';
+      h += '<button class="ob-btn ob-btn-confirm" id="btn-confirm-ambition">Looks good</button>';
+      h += '</div>';
+      h += '</div>';
+    } else {
+      h += '<div class="ob-card-summary">';
+      h += 'Goal: ' + esc(data.goal);
+      if (data.concern) h += ' &bull; Concern: ' + esc(data.concern.length > 60 ? data.concern.slice(0,60) + '...' : data.concern);
+      h += ' <button class="ob-edit-btn" data-edit="ambition">Edit</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderHypothesesCard(t) {
+    if (data.aiHypotheses.length === 0) return '';
+    var catColors = { customer: '#e67e22', value: '#2ecc71', revenue: '#3498db', growth: '#9b59b6', cost: '#e74c3c' };
+
+    var h = '<div class="ob-card anim-slide-up" data-card="hypotheses">';
+    h += '<div class="ob-card-header">';
+    h += '<span class="ob-card-icon">&#9881;</span>';
+    h += '<span class="ob-card-title">Your Hypotheses</span>';
+    h += '</div>';
+    h += '<div class="ob-card-body">';
+    h += '<p class="ob-card-prompt">These are testable assumptions specific to your business. Toggle off any that don\'t feel right.</p>';
+
+    data.aiHypotheses.forEach(function(hyp, i) {
+      var selected = !data.selectedHypIds || data.selectedHypIds.indexOf(i) >= 0;
+      h += '<label class="ob-hyp-toggle' + (selected ? '' : ' deselected') + '">';
+      h += '<input type="checkbox" data-idx="' + i + '"' + (selected ? ' checked' : '') + '>';
+      h += '<div class="ob-hyp-text">';
+      h += '<span class="ob-hyp-cat" style="background:' + (catColors[hyp.category] || '#999') + '">' + esc(hyp.category) + '</span>';
+      h += '<div class="ob-hyp-statement">' + esc(hyp.statement) + '</div>';
+      if (hyp.rationale) h += '<div class="ob-hyp-detail">' + esc(hyp.rationale) + '</div>';
+      h += '<div class="ob-hyp-detail">Target: ' + hyp.target + ' ' + esc(hyp.unit || '') + ' &mdash; ' + esc(hyp.timeframe || '') + '</div>';
+      h += '</div></label>';
+    });
+
+    h += '<div class="ob-card-actions" style="margin-top:16px">';
+    h += '<button class="ob-btn ob-btn-launch" id="btn-launch">Launch your cockpit &#9654;</button>';
+    h += '</div>';
+    h += '</div></div>';
+    return h;
+  }
+
+  // ── Live Canvas Preview ──
+  function renderLiveCanvas(t) {
     var cells = [
-      { key: 'keyPartners', label: 'Partners', tall: true, items: [] },
-      { key: 'keyActivities', label: 'Activities', half: true, items: ['Deliver product/service', 'Acquire customers'] },
-      { key: 'keyResources', label: 'Resources', half: true, items: ['Founding team'] },
-      { key: 'valueProp', label: 'Value Prop', tall: true, items: [] },
-      { key: 'customerRelationships', label: 'Relations', half: true, items: ['Personal interaction'] },
-      { key: 'channels', label: 'Channels', half: true, items: [] },
-      { key: 'customerSegments', label: 'Customers', tall: true, items: [] },
-      { key: 'costStructure', label: 'Costs', wide: true, wideClass: 'preview-cell-costs', items: [] },
-      { key: 'revenueStreams', label: 'Revenue', wide: true, wideClass: 'preview-cell-revenue', items: [] }
+      { key: 'keyPartners', label: t.keyPartners, tall: true, items: [] },
+      { key: 'keyActivities', label: t.keyActivities, half: true, items: ['Deliver core offering', 'Acquire ' + t.customers] },
+      { key: 'keyResources', label: t.keyResources, half: true, items: ['Founding team'] },
+      { key: 'valueProp', label: t.valueProp, tall: true, items: [] },
+      { key: 'customerRelationships', label: t.customerRelationships, half: true, items: ['Personal interaction'] },
+      { key: 'channels', label: t.channels, half: true, items: [] },
+      { key: 'customerSegments', label: t.customerSegments, tall: true, items: [] },
+      { key: 'costStructure', label: t.costStructure, wide: true, wideClass: 'preview-cell-costs', items: [] },
+      { key: 'revenueStreams', label: t.revenueStreams, wide: true, wideClass: 'preview-cell-revenue', items: [] }
     ];
 
     // Fill from wizard data
@@ -259,100 +370,159 @@ var Wizard = (function() {
       if (wd.customerSegments && !data.segments.length) cells[6].items = wd.customerSegments.slice(0, 3);
     }
 
-    var activeKey = '';
-    if (step === 1) activeKey = 'valueProp';
-    if (step === 2) activeKey = 'customerSegments';
-    if (step === 3) activeKey = 'costStructure';
+    // Highlight active section based on card stage
+    var activeKeys = [];
+    if (!confirmed.identity) activeKeys = ['valueProp'];
+    else if (!confirmed.customers) activeKeys = ['customerSegments'];
+    else if (cardStage === 'B' && !confirmed.economics) activeKeys = ['costStructure', 'revenueStreams', 'keyResources'];
+    else if (cardStage === 'B' && !confirmed.ambition) activeKeys = ['keyActivities'];
 
-    var h = '<div class="preview-mini-canvas">';
+    var h = '<div class="ob-preview-header">';
+    if (data.name) {
+      h += '<div class="ob-preview-biz-name">' + esc(data.name) + '</div>';
+    }
+    h += '<div class="ob-preview-label">Your Business Model</div>';
+    h += '</div>';
+
+    h += '<div class="preview-mini-canvas">';
     cells.forEach(function(cell) {
       var classes = 'preview-cell';
       if (cell.tall) classes += ' preview-cell-tall';
       if (cell.wide) classes += ' preview-cell-wide ' + (cell.wideClass || '');
       if (cell.half) classes += ' preview-cell-half';
-      if (cell.key === activeKey) classes += ' active';
+      if (activeKeys.indexOf(cell.key) >= 0) classes += ' active';
       if (!cell.items.length) classes += ' empty';
       h += '<div class="' + classes + '">';
-      h += '<div class="preview-cell-label">' + cell.label + '</div>';
+      h += '<div class="preview-cell-label">' + esc(cell.label) + '</div>';
       cell.items.forEach(function(item) {
         h += '<div class="preview-cell-item">' + esc(typeof item === 'string' ? item : '') + '</div>';
       });
       h += '</div>';
     });
     h += '</div>';
+
+    // Hypotheses preview in canvas
+    if (data.aiHypotheses.length > 0 && cardStage === 'C') {
+      h += '<div class="ob-preview-hyps">';
+      h += '<div class="ob-preview-label" style="margin-top:16px">Hypotheses</div>';
+      var catColors = { customer: '#e67e22', value: '#2ecc71', revenue: '#3498db', growth: '#9b59b6', cost: '#e74c3c' };
+      data.aiHypotheses.forEach(function(hyp, i) {
+        var selected = !data.selectedHypIds || data.selectedHypIds.indexOf(i) >= 0;
+        if (!selected) return;
+        h += '<div class="preview-hyp-card" style="animation-delay:' + (i * 0.08) + 's;opacity:1">';
+        h += '<span class="wiz-hyp-cat" style="background:' + (catColors[hyp.category] || '#999') + '">' + esc(hyp.category) + '</span> ';
+        h += esc(hyp.statement);
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+
     return h;
   }
 
+  // ── Launching Animation ──
+  function renderLaunchingStage() {
+    var h = '<div class="ob-entrance ob-launching">';
+    h += '<div class="ob-entrance-content">';
+    h += '<div class="ob-assembling">';
+    h += '<div class="ob-pulse-ring"></div>';
+    h += '<p class="ob-analyzing-text">Setting up your cockpit...</p>';
+    h += '</div>';
+    h += '</div>';
+    h += '</div>';
+    container.innerHTML = h;
+  }
+
   // ── Event Binding ──
-  function bindEvents() {
-    bindChips('wiz-segs', data.segments);
-    bindChips('wiz-costs', data.costs);
+  function bindWorkspaceEvents() {
+    // Chip selection
+    bindChips('ob-segs', data.segments, function() {
+      var btn = document.getElementById('btn-confirm-customers');
+      if (btn) btn.disabled = data.segments.length === 0;
+      refreshPreview();
+    });
+    bindChips('ob-costs', data.costs, function() { refreshPreview(); });
     bindGoalChips();
-    bindCustomInputs();
-    bindPreviewToggle();
-    bindHypToggles();
-  }
 
-  function bindChips(containerId, arr) {
-    var el = document.getElementById(containerId);
-    if (!el) return;
-    el.querySelectorAll('.wiz-chip').forEach(function(chip) {
-      chip.addEventListener('click', function() {
-        var val = this.getAttribute('data-val');
-        var idx = arr.indexOf(val);
-        if (idx >= 0) { arr.splice(idx, 1); this.classList.remove('active'); }
-        else { arr.push(val); this.classList.add('active'); }
-        refreshPreview();
-      });
-    });
-  }
-
-  function bindGoalChips() {
-    var el = document.getElementById('wiz-goals');
-    if (!el) return;
-    el.querySelectorAll('.wiz-chip').forEach(function(chip) {
-      chip.addEventListener('click', function() {
-        el.querySelectorAll('.wiz-chip').forEach(function(c) { c.classList.remove('active'); });
-        data.goal = this.getAttribute('data-val');
-        this.classList.add('active');
-        var custom = document.getElementById('wiz-goal-custom');
-        if (custom) custom.value = '';
-      });
-    });
-  }
-
-  function bindCustomInputs() {
-    var segInput = document.getElementById('wiz-seg-custom');
+    // Custom segment input
+    var segInput = document.getElementById('ob-seg-custom');
     if (segInput) segInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && this.value.trim()) {
         var val = this.value.trim();
         if (data.segments.indexOf(val) < 0) data.segments.push(val);
         this.value = '';
-        render(container);
+        renderWorkspaceStage();
       }
     });
 
-    var goalInput = document.getElementById('wiz-goal-custom');
+    // Custom goal input
+    var goalInput = document.getElementById('ob-goal-custom');
     if (goalInput) goalInput.addEventListener('input', function() {
       if (this.value.trim()) {
         data.goal = this.value.trim();
-        var el = document.getElementById('wiz-goals');
-        if (el) el.querySelectorAll('.wiz-chip').forEach(function(c) { c.classList.remove('active'); });
+        var el = document.getElementById('ob-goals');
+        if (el) el.querySelectorAll('.ob-chip').forEach(function(c) { c.classList.remove('active'); });
       }
     });
-  }
 
-  function bindPreviewToggle() {
-    var toggle = document.getElementById('preview-toggle');
-    if (toggle) toggle.addEventListener('click', function() {
-      previewExpanded = !previewExpanded;
-      var preview = document.getElementById('onboarding-preview');
-      if (preview) preview.classList.toggle('expanded', previewExpanded);
+    // Live preview updates from text inputs
+    var nameInput = document.getElementById('ob-name');
+    if (nameInput) nameInput.addEventListener('input', function() {
+      data.name = this.value.trim();
+      refreshPreview();
     });
-  }
+    var proudInput = document.getElementById('ob-proud');
+    if (proudInput) proudInput.addEventListener('input', function() {
+      data.proudOf = this.value.trim();
+      refreshPreview();
+    });
 
-  function bindHypToggles() {
-    document.querySelectorAll('.wiz-hyp-toggle input[type="checkbox"]').forEach(function(cb) {
+    // Confirm buttons
+    bindConfirm('btn-confirm-identity', 'identity', function() {
+      var nameEl = document.getElementById('ob-name');
+      var proudEl = document.getElementById('ob-proud');
+      data.name = nameEl ? nameEl.value.trim() : data.name;
+      data.proudOf = proudEl ? proudEl.value.trim() : data.proudOf;
+      if (!data.name && !data.proudOf) return false;
+      if (!data.type || data.type === 'service') {
+        data.type = AI.detectType(data.proudOf + ' ' + data.description + ' ' + data.name);
+      }
+      return true;
+    });
+
+    bindConfirm('btn-confirm-customers', 'customers', function() {
+      return data.segments.length > 0;
+    });
+
+    bindConfirm('btn-confirm-economics', 'economics', function() {
+      var revEl = document.getElementById('ob-revenue');
+      var teamEl = document.getElementById('ob-team');
+      data.revenueRange = revEl ? revEl.value : data.revenueRange;
+      data.teamSize = teamEl ? teamEl.value : data.teamSize;
+      return true;
+    });
+
+    bindConfirm('btn-confirm-ambition', 'ambition', function() {
+      var goalCustom = document.getElementById('ob-goal-custom');
+      if (goalCustom && goalCustom.value.trim()) data.goal = goalCustom.value.trim();
+      var concernEl = document.getElementById('ob-concern');
+      data.concern = concernEl ? concernEl.value.trim() : data.concern;
+      return !!data.goal;
+    });
+
+    // Edit buttons
+    container.querySelectorAll('.ob-edit-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var card = this.dataset.edit;
+        confirmed[card] = false;
+        // If editing a Stage A card while in B or C, stay at current stage
+        renderWorkspaceStage();
+      });
+    });
+
+    // Hypothesis toggles
+    container.querySelectorAll('.ob-hyp-toggle input[type="checkbox"]').forEach(function(cb) {
       cb.addEventListener('change', function() {
         var idx = parseInt(this.dataset.idx);
         if (!data.selectedHypIds) {
@@ -363,148 +533,158 @@ var Wizard = (function() {
         } else {
           data.selectedHypIds = data.selectedHypIds.filter(function(i) { return i !== idx; });
         }
-        this.closest('.wiz-hyp-toggle').classList.toggle('deselected', !this.checked);
+        this.closest('.ob-hyp-toggle').classList.toggle('deselected', !this.checked);
         refreshPreview();
+      });
+    });
+
+    // Launch button
+    var launchBtn = document.getElementById('btn-launch');
+    if (launchBtn) launchBtn.addEventListener('click', function() { finish(); });
+
+    // Preview toggle (mobile)
+    var toggle = document.getElementById('preview-toggle');
+    if (toggle) toggle.addEventListener('click', function() {
+      previewExpanded = !previewExpanded;
+      var preview = document.getElementById('ob-preview');
+      if (preview) preview.classList.toggle('expanded', previewExpanded);
+    });
+  }
+
+  function bindChips(containerId, arr, onChange) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    el.querySelectorAll('.ob-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        var val = this.getAttribute('data-val');
+        var idx = arr.indexOf(val);
+        if (idx >= 0) { arr.splice(idx, 1); this.classList.remove('active'); }
+        else { arr.push(val); this.classList.add('active'); }
+        if (onChange) onChange();
       });
     });
   }
 
-  function scrollThread() {
-    var thread = document.getElementById('conv-thread');
-    if (thread) setTimeout(function() { thread.scrollTop = thread.scrollHeight; }, 50);
+  function bindGoalChips() {
+    var el = document.getElementById('ob-goals');
+    if (!el) return;
+    el.querySelectorAll('.ob-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        el.querySelectorAll('.ob-chip').forEach(function(c) { c.classList.remove('active'); });
+        data.goal = this.getAttribute('data-val');
+        this.classList.add('active');
+        var custom = document.getElementById('ob-goal-custom');
+        if (custom) custom.value = '';
+      });
+    });
   }
 
-  function refreshPreview() {
-    var previewEl = document.getElementById('onboarding-preview');
-    if (previewEl) {
-      var toggle = '<div class="preview-toggle" id="preview-toggle"></div>';
-      previewEl.innerHTML = toggle + renderPreview();
-      bindPreviewToggle();
+  function bindConfirm(btnId, cardName, validate) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      if (validate && !validate()) return;
+      confirmed[cardName] = true;
+      checkStageAdvance();
+      saveProgress();
+      renderWorkspaceStage();
+    });
+  }
+
+  function checkStageAdvance() {
+    if (cardStage === 'A' && confirmed.identity && confirmed.customers) {
+      cardStage = 'B';
+    }
+    if (cardStage === 'B' && confirmed.economics && confirmed.ambition) {
+      cardStage = 'C';
+      // Generate hypotheses
+      if (data.aiHypotheses.length === 0) {
+        loading = true;
+        renderWorkspaceStage();
+        AI.generateHypotheses(data).then(function(result) {
+          loading = false;
+          data.aiHypotheses = result.hypotheses || [];
+          saveProgress();
+          renderWorkspaceStage();
+        });
+      }
     }
   }
 
-  function addUserMessage(content) {
-    messages.push({ type: 'user', content: content, stepId: STEPS[step].id });
+  function refreshPreview() {
+    var previewEl = document.getElementById('ob-preview');
+    if (previewEl) {
+      var t = terms();
+      var toggle = '<div class="preview-toggle" id="preview-toggle"></div>';
+      previewEl.innerHTML = toggle + renderLiveCanvas(t);
+      // Rebind preview toggle
+      var toggleEl = document.getElementById('preview-toggle');
+      if (toggleEl) toggleEl.addEventListener('click', function() {
+        previewExpanded = !previewExpanded;
+        previewEl.classList.toggle('expanded', previewExpanded);
+      });
+    }
   }
 
-  function addSystemMessage(content) {
-    messages.push({ type: 'system', content: content, stepId: STEPS[step].id });
+  function scrollToLatestCard() {
+    var cards = container.querySelectorAll('.ob-card:not(.ob-card-done)');
+    if (cards.length > 0) {
+      var lastCard = cards[cards.length - 1];
+      setTimeout(function() {
+        lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    }
   }
 
-  function advanceStep() {
-    step++;
-    saveProgress();
-    render(container);
-  }
-
-  function saveProgress() {
-    Store.saveOnboardingData({ step: step, data: data, messages: messages });
-  }
-
-  // ── Step handlers ──
+  // ── Actions ──
   function analyzeWebsite() {
-    var urlEl = document.getElementById('wiz-url');
+    var urlEl = document.getElementById('ob-url');
     var url = urlEl ? urlEl.value.trim() : '';
-    if (!url) { skipWebsite(); return; }
+    if (!url) { skipToManual(); return; }
 
     data.websiteUrl = url;
-    addUserMessage('<div class="conv-answer-label">Website</div><div class="conv-answer-value">' + esc(url) + '</div>');
-    loading = true;
+    stage = 'analyzing';
     render(container);
 
     AI.analyzeWebsite(url).then(function(result) {
-      loading = false;
       if (result.ok && result.data) {
         data.websiteData = result.data;
         if (result.data.businessName) data.name = result.data.businessName;
         if (result.data.type) data.type = result.data.type;
         if (result.data.description) data.description = result.data.description;
-        if (result.data.customerSegments) data.segments = result.data.customerSegments.slice(0, 3);
-        addSystemMessage('Got it! I found some info about your business. Let\'s build on that.');
-      } else {
-        addSystemMessage('I couldn\'t access your website, but no worries \u2014 let\'s build your model from what you tell me.');
+        if (result.data.valueProposition) data.proudOf = result.data.valueProposition;
+        if (result.data.customerSegments) data.segments = result.data.customerSegments.slice(0, 4);
+        if (result.data.greeting) data.greeting = result.data.greeting;
+
+        // Apply brand colors
+        if (result.data.brandColors && result.data.brandColors.primary) {
+          data.brandColors = result.data.brandColors;
+          var palette = AI.generatePalette(result.data.brandColors.primary, result.data.brandColors.secondary);
+          if (palette) AI.applyTheme(palette);
+        }
+
+        // Save terminology
+        var terminology = AI.getTerminology(data.type);
+        Store.saveTerminology({ businessType: data.type, labels: terminology });
       }
-      advanceStep();
+
+      stage = 'workspace';
+      saveProgress();
+      render(container);
     });
   }
 
-  function skipWebsite() {
-    addUserMessage('<div class="conv-answer-value" style="color:var(--text3)">Skipped</div>');
-    advanceStep();
-  }
-
-  function submitProud() {
-    var nameEl = document.getElementById('wiz-name');
-    var proudEl = document.getElementById('wiz-proud');
-    data.name = nameEl ? nameEl.value.trim() : data.name;
-    data.proudOf = proudEl ? proudEl.value.trim() : '';
-    if (!data.proudOf && !data.name) return; // need at least something
-
-    if (!data.type || data.type === 'service') {
-      data.type = AI.detectType(data.proudOf + ' ' + data.description + ' ' + data.name);
-    }
-
-    addUserMessage(
-      '<div class="conv-answer-label">' + esc(data.name || 'My Business') + '</div>' +
-      '<div class="conv-answer-value">' + esc(data.proudOf || 'Not specified') + '</div>'
-    );
-    advanceStep();
-  }
-
-  function submitCustomers() {
-    if (!data.segments.length) return;
-    addUserMessage('<div class="conv-answer-label">Best customers</div><div class="conv-answer-value">' + data.segments.map(esc).join(', ') + '</div>');
-    advanceStep();
-  }
-
-  function submitEconomics() {
-    var revEl = document.getElementById('wiz-revenue');
-    var teamEl = document.getElementById('wiz-team');
-    data.revenueRange = revEl ? revEl.value : '';
-    data.teamSize = teamEl ? teamEl.value : '';
-
-    addUserMessage(
-      '<div class="conv-answer-label">Economics</div>' +
-      '<div class="conv-answer-value">Revenue: ' + esc(data.revenueRange) +
-      ' \u2022 Team: ' + esc(data.teamSize) +
-      ' \u2022 Costs: ' + data.costs.map(esc).join(', ') + '</div>'
-    );
-    advanceStep();
-  }
-
-  function submitGoal() {
-    var customEl = document.getElementById('wiz-goal-custom');
-    if (customEl && customEl.value.trim()) data.goal = customEl.value.trim();
-    if (!data.goal) return;
-
-    addUserMessage('<div class="conv-answer-label">6-month goal</div><div class="conv-answer-value">' + esc(data.goal) + '</div>');
-    advanceStep();
-  }
-
-  function submitConcerns() {
-    var el = document.getElementById('wiz-concern');
-    data.concern = el ? el.value.trim() : '';
-
-    addUserMessage('<div class="conv-answer-label">Biggest concern</div><div class="conv-answer-value">' + esc(data.concern || 'Nothing specific') + '</div>');
-
-    // Generate hypotheses
-    loading = true;
+  function skipToManual() {
+    stage = 'workspace';
+    data.greeting = 'Let\'s build your business cockpit from scratch';
     render(container);
-
-    AI.generateHypotheses(data).then(function(result) {
-      loading = false;
-      data.aiHypotheses = result.hypotheses || [];
-      if (result.source === 'ai') {
-        addSystemMessage('Here are personalized hypotheses based on your business. Toggle off any that don\'t feel right.');
-      } else {
-        addSystemMessage('Here are some starter hypotheses to test. You can always add more later in the Tracker.');
-      }
-      advanceStep();
-    });
   }
 
   function finish() {
-    // Determine which hypotheses are selected
+    stage = 'launching';
+    render(container);
+
+    // Determine selected hypotheses
     var selectedHyps = [];
     if (data.selectedHypIds) {
       data.selectedHypIds.forEach(function(i) {
@@ -514,7 +694,6 @@ var Wizard = (function() {
       selectedHyps = data.aiHypotheses;
     }
 
-    // Build description
     var desc = data.description || data.proudOf || '';
 
     // Save business
@@ -528,9 +707,14 @@ var Wizard = (function() {
       concern: data.concern,
       revenueRange: data.revenueRange,
       teamSize: data.teamSize,
+      brandColors: data.brandColors,
       createdAt: new Date().toISOString().slice(0, 10),
       stage: data.revenueRange === 'Pre-revenue' ? 'idea' : 'validation'
     });
+
+    // Save terminology
+    var terminology = AI.getTerminology(data.type);
+    Store.saveTerminology({ businessType: data.type, labels: terminology });
 
     // Build and save canvas
     var canvas = AI.buildCanvas(data);
@@ -543,24 +727,38 @@ var Wizard = (function() {
     Store.setWizardComplete();
     Store.clearOnboardingData();
 
-    window.location.hash = '#tracker';
-    App.render();
+    setTimeout(function() {
+      window.location.hash = '#tracker';
+      App.render();
+    }, 800);
   }
 
   function reset() {
-    step = 0;
-    messages = [];
-    data = { websiteUrl: '', websiteData: null, name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', aiHypotheses: [], selectedHypIds: null };
+    stage = 'url';
+    cardStage = 'A';
+    confirmed = { identity: false, customers: false, economics: false, ambition: false };
+    data = { websiteUrl: '', websiteData: null, brandColors: null, greeting: '', name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', aiHypotheses: [], selectedHypIds: null };
     loading = false;
   }
 
-  // Try to resume from saved progress
+  function saveProgress() {
+    Store.saveOnboardingData({ stage: stage, cardStage: cardStage, confirmed: confirmed, data: data });
+  }
+
   function tryResume() {
     var saved = Store.getOnboardingData();
     if (saved) {
-      step = saved.step || 0;
-      data = saved.data || data;
-      messages = saved.messages || [];
+      stage = saved.stage || 'url';
+      cardStage = saved.cardStage || 'A';
+      if (saved.confirmed) confirmed = saved.confirmed;
+      if (saved.data) data = saved.data;
+      // Restore theme if brand colors were saved
+      if (data.brandColors && data.brandColors.primary) {
+        var palette = AI.generatePalette(data.brandColors.primary, data.brandColors.secondary);
+        if (palette) {
+          AI.restoreTheme();
+        }
+      }
     }
   }
 
@@ -568,14 +766,6 @@ var Wizard = (function() {
 
   return {
     render: function(cont) { tryResume(); render(cont); },
-    analyzeWebsite: analyzeWebsite,
-    skipWebsite: skipWebsite,
-    submitProud: submitProud,
-    submitCustomers: submitCustomers,
-    submitEconomics: submitEconomics,
-    submitGoal: submitGoal,
-    submitConcerns: submitConcerns,
-    finish: finish,
     reset: reset
   };
 })();

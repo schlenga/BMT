@@ -62,8 +62,10 @@ var App = (function() {
   function buildNav(route) {
     var nav = document.createElement('nav');
     nav.className = 'main-nav';
+    var biz = Store.getBusiness();
+    var brandName = biz && biz.name ? biz.name : 'BMT';
 
-    var h = '<div class="nav-brand" onclick="window.location.hash=\'#tracker\'">BMT</div>';
+    var h = '<div class="nav-brand" onclick="window.location.hash=\'#tracker\'">' + esc(brandName) + '</div>';
     h += '<div class="nav-links">';
 
     if (Store.isWizardComplete()) {
@@ -194,7 +196,11 @@ var App = (function() {
 
   // Listen for hash changes
   window.addEventListener('hashchange', render);
-  window.addEventListener('DOMContentLoaded', render);
+  window.addEventListener('DOMContentLoaded', function() {
+    // Restore saved brand theme before first render
+    AI.restoreTheme();
+    render();
+  });
 
   return {
     render: render
