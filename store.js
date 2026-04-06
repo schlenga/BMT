@@ -8,6 +8,8 @@ var Store = (function() {
     hypotheses: 'bmt_hypotheses',
     wizardComplete: 'bmt_wizard_complete',
     onboardingData: 'bmt_onboarding_data',
+    theme: 'bmt_theme',
+    terminology: 'bmt_terminology',
     toolPrefs: 'bmt_tool_prefs',
     promptState: 'bmt_prompt_state'
   };
@@ -129,6 +131,14 @@ var Store = (function() {
   function isWizardComplete() { return get(KEYS.wizardComplete) === true; }
   function setWizardComplete() { set(KEYS.wizardComplete, true); }
 
+  // Theme (brand colors palette)
+  function getTheme() { return get(KEYS.theme); }
+  function saveTheme(theme) { set(KEYS.theme, theme); }
+
+  // Terminology (adaptive labels)
+  function getTerminology() { return get(KEYS.terminology); }
+  function saveTerminology(terms) { set(KEYS.terminology, terms); }
+
   // Tool preferences
   function getToolPrefs() { return get(KEYS.toolPrefs) || {}; }
   function saveToolPrefs(prefs) { set(KEYS.toolPrefs, prefs); }
@@ -205,6 +215,10 @@ var Store = (function() {
     addActual: addActual,
     isWizardComplete: isWizardComplete,
     setWizardComplete: setWizardComplete,
+    getTheme: getTheme,
+    saveTheme: saveTheme,
+    getTerminology: getTerminology,
+    saveTerminology: saveTerminology,
     getToolPrefs: getToolPrefs,
     saveToolPrefs: saveToolPrefs,
     getPromptState: getPromptState,

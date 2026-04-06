@@ -9,13 +9,18 @@ var Tracker = (function() {
   var activePrompts = []; // current action prompts
   var connectorModal = null; // { prompt, phase: 'loading'|'ready' }
 
-  var CAT_COLORS = {
-    customer: { bg: '#fef3e2', fg: '#e67e22', label: 'Customer' },
-    value:    { bg: '#e8f8e8', fg: '#27ae60', label: 'Value' },
-    revenue:  { bg: '#e3f2fd', fg: '#2980b9', label: 'Revenue' },
-    growth:   { bg: '#f3e5f5', fg: '#8e44ad', label: 'Growth' },
-    cost:     { bg: '#fce4ec', fg: '#c0392b', label: 'Cost' }
-  };
+  function getCatColors() {
+    var biz = Store.getBusiness();
+    var t = AI.getTerminology(biz ? biz.type : 'service');
+    return {
+      customer: { bg: '#fef3e2', fg: '#e67e22', label: t.customers ? (t.customers.charAt(0).toUpperCase() + t.customers.slice(1)) : 'Customer' },
+      value:    { bg: '#e8f8e8', fg: '#27ae60', label: 'Value' },
+      revenue:  { bg: '#e3f2fd', fg: '#2980b9', label: t.revenue ? (t.revenue.charAt(0).toUpperCase() + t.revenue.slice(1)) : 'Revenue' },
+      growth:   { bg: '#f3e5f5', fg: '#8e44ad', label: 'Growth' },
+      cost:     { bg: '#fce4ec', fg: '#c0392b', label: 'Cost' }
+    };
+  }
+  var CAT_COLORS = getCatColors();
 
   var STATUS_INFO = {
     testing:     { label: 'Testing', color: '#3498db', bg: '#e3f2fd' },
@@ -27,6 +32,7 @@ var Tracker = (function() {
   function render(container) {
     var hyps = Store.getHypotheses();
     var biz = Store.getBusiness();
+    CAT_COLORS = getCatColors();
 
     var h = '';
     h += '<div class="tracker-header">';
@@ -73,11 +79,11 @@ var Tracker = (function() {
     h += '<div class="tracker-filters">';
     h += filterBtn('all', 'All');
     h += filterBtn('critical', 'Critical');
-    h += filterBtn('customer', 'Customer');
-    h += filterBtn('value', 'Value');
-    h += filterBtn('revenue', 'Revenue');
-    h += filterBtn('growth', 'Growth');
-    h += filterBtn('cost', 'Cost');
+    h += filterBtn('customer', CAT_COLORS.customer.label);
+    h += filterBtn('value', CAT_COLORS.value.label);
+    h += filterBtn('revenue', CAT_COLORS.revenue.label);
+    h += filterBtn('growth', CAT_COLORS.growth.label);
+    h += filterBtn('cost', CAT_COLORS.cost.label);
     h += '</div>';
 
     // Add hypothesis button
