@@ -754,16 +754,18 @@ var Wizard = (function() {
   function tryResume() {
     var saved = Store.getOnboardingData();
     if (saved) {
+      // Discard stale data from old chatbot-style wizard (has 'step'/'messages' instead of 'stage'/'cardStage')
+      if (saved.step !== undefined || saved.messages !== undefined) {
+        Store.clearOnboardingData();
+        return;
+      }
       stage = saved.stage || 'url';
       cardStage = saved.cardStage || 'A';
       if (saved.confirmed) confirmed = saved.confirmed;
       if (saved.data) data = saved.data;
       // Restore theme if brand colors were saved
       if (data.brandColors && data.brandColors.primary) {
-        var palette = AI.generatePalette(data.brandColors.primary, data.brandColors.secondary);
-        if (palette) {
-          AI.restoreTheme();
-        }
+        AI.restoreTheme();
       }
     }
   }
