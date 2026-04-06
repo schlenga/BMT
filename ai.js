@@ -376,6 +376,7 @@ var AI = (function() {
     getSuggestions: getSuggestions,
     isAvailable: isAvailable,
     callClaude: callClaude,
+    parseJSON: parseJSON,
     analyzeWebsite: analyzeWebsite,
     generateHypotheses: generateHypotheses,
     keywordFallbackHypotheses: keywordFallbackHypotheses,
