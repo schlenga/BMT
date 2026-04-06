@@ -5,7 +5,7 @@ beforeAll(() => {
   global.confirm = jest.fn(() => true);
   global.prompt = jest.fn(() => null);
 
-  loadModules(['store', 'ai', 'prompts', 'canvas', 'tracker', 'wizard', 'app']);
+  loadModules(['store', 'ai', 'prompts', 'simulationTypes', 'simulation', 'simulationUI', 'canvas', 'tracker', 'wizard', 'app']);
 });
 
 beforeEach(() => {
@@ -332,13 +332,13 @@ describe('App', () => {
       expect(app.querySelector('.ob-entrance') || app.querySelector('.ob-workspace')).toBeTruthy();
     });
 
-    test('renders tracker when wizard is complete and no hash', () => {
+    test('renders simulation when wizard is complete and no hash', () => {
       Store.setWizardComplete();
-      Store.saveBusiness({ name: 'Test' });
+      Store.saveBusiness({ name: 'Test', type: 'service' });
       window.location.hash = '';
       App.render();
       const app = document.getElementById('app');
-      expect(app.querySelector('.tracker-header')).toBeTruthy();
+      expect(app.querySelector('.sim-header')).toBeTruthy();
     });
 
     test('renders nav with correct active state', () => {
@@ -456,6 +456,7 @@ describe('App', () => {
       const nav = document.querySelector('.main-nav');
       const links = nav.querySelectorAll('.nav-link');
       const linkTexts = Array.from(links).map(l => l.textContent);
+      expect(linkTexts).toContain('Projection');
       expect(linkTexts).toContain('Tracker');
       expect(linkTexts).toContain('Canvas');
       expect(linkTexts).toContain('Settings');

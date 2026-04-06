@@ -6,7 +6,7 @@ var Wizard = (function() {
   // ── State ──
   var stage = 'url'; // 'url' | 'analyzing' | 'workspace' | 'launching'
   var cardStage = 'A'; // 'A' | 'B' | 'C'
-  var confirmed = { identity: false, customers: false, economics: false, ambition: false };
+  var confirmed = { identity: false, customers: false, economics: false, financials: false, ambition: false };
   var data = {
     websiteUrl: '',
     websiteData: null,
@@ -24,7 +24,10 @@ var Wizard = (function() {
     concern: '',
     toolPrefs: {},
     aiHypotheses: [],
-    selectedHypIds: null
+    selectedHypIds: null,
+    startingCash: '',
+    avgPrice: '',
+    monthlyVolume: ''
   };
   var loading = false;
   var previewExpanded = false;
@@ -112,6 +115,7 @@ var Wizard = (function() {
     // Stage B cards (revealed after A confirmed)
     if (cardStage === 'B' || cardStage === 'C') {
       h += renderEconomicsCard(t);
+      h += renderFinancialsCard(t);
       h += renderAmbitionCard(t);
     }
 
@@ -263,6 +267,65 @@ var Wizard = (function() {
       h += esc(data.revenueRange) + ' &bull; Team: ' + esc(data.teamSize);
       if (data.costs.length) h += ' &bull; ' + esc(data.costs.join(', '));
       h += ' <button class="ob-edit-btn" data-edit="economics">Edit</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderFinancialsCard(t) {
+    var isConfirmed = confirmed.financials;
+    if (!confirmed.economics) return ''; // Only show after economics
+
+    var type = data.type || 'service';
+    var tmpl = (typeof SimulationTypes !== 'undefined') ? SimulationTypes.getTemplate(type) : null;
+    var kpi = (typeof SimulationTypes !== 'undefined') ? SimulationTypes.getKpiLabels(type) : { units: 'units', revenue: 'revenue', customers: 'customers' };
+
+    // Smart defaults from template
+    var defaultPrice = tmpl ? tmpl.revenueStreams[0].unitPrice : 50;
+    var defaultVolume = tmpl ? tmpl.revenueStreams[0].unitsPerMonth : 100;
+    var defaultCash = tmpl ? tmpl.startingCash : 10000;
+
+    var h = '<div class="ob-card' + (isConfirmed ? ' ob-card-done' : '') + ' anim-slide-up ob-delay-1" data-card="financials">';
+    h += '<div class="ob-card-header">';
+    h += '<span class="ob-card-icon">&#9733;</span>';
+    h += '<span class="ob-card-title">Financial Details</span>';
+    if (isConfirmed) h += '<span class="ob-card-check">&#10003;</span>';
+    h += '</div>';
+
+    if (!isConfirmed) {
+      h += '<div class="ob-card-body">';
+      h += '<p class="ob-card-prompt">These numbers power your financial projection. Best guesses are fine — you can adjust later.</p>';
+
+      h += '<div class="ob-field-row">';
+      h += '<div class="ob-field ob-field-third">';
+      h += '<label class="ob-field-label">Starting cash / capital</label>';
+      h += '<div class="ob-input-prefix"><span>$</span><input class="ob-input" id="ob-cash" type="number" placeholder="' + defaultCash + '" value="' + (data.startingCash || '') + '"></div>';
+      h += '</div>';
+
+      h += '<div class="ob-field ob-field-third">';
+      h += '<label class="ob-field-label">Avg price per ' + esc(kpi.units === 'units' ? 'sale' : kpi.units.replace(/s$/, '')) + '</label>';
+      h += '<div class="ob-input-prefix"><span>$</span><input class="ob-input" id="ob-price" type="number" placeholder="' + defaultPrice + '" value="' + (data.avgPrice || '') + '"></div>';
+      h += '</div>';
+
+      h += '<div class="ob-field ob-field-third">';
+      h += '<label class="ob-field-label">' + esc(kpi.units.charAt(0).toUpperCase() + kpi.units.slice(1)) + ' per month</label>';
+      h += '<input class="ob-input" id="ob-volume" type="number" placeholder="' + defaultVolume + '" value="' + (data.monthlyVolume || '') + '">';
+      h += '</div>';
+      h += '</div>';
+
+      h += '<div class="ob-card-actions">';
+      h += '<button class="ob-btn ob-btn-confirm" id="btn-confirm-financials">Looks good</button>';
+      h += '<span class="ob-skip-hint" id="btn-skip-financials">Skip — use defaults</span>';
+      h += '</div>';
+      h += '</div>';
+    } else {
+      h += '<div class="ob-card-summary">';
+      var cashDisplay = data.startingCash ? '$' + Number(data.startingCash).toLocaleString() : 'Default';
+      var priceDisplay = data.avgPrice ? '$' + data.avgPrice : 'Default';
+      var volDisplay = data.monthlyVolume || 'Default';
+      h += 'Cash: ' + cashDisplay + ' &bull; Price: ' + priceDisplay + ' &bull; Volume: ' + volDisplay + '/mo';
+      h += ' <button class="ob-edit-btn" data-edit="financials">Edit</button>';
       h += '</div>';
     }
     h += '</div>';
@@ -503,6 +566,24 @@ var Wizard = (function() {
       return true;
     });
 
+    bindConfirm('btn-confirm-financials', 'financials', function() {
+      var cashEl = document.getElementById('ob-cash');
+      var priceEl = document.getElementById('ob-price');
+      var volEl = document.getElementById('ob-volume');
+      data.startingCash = cashEl && cashEl.value ? parseFloat(cashEl.value) : '';
+      data.avgPrice = priceEl && priceEl.value ? parseFloat(priceEl.value) : '';
+      data.monthlyVolume = volEl && volEl.value ? parseFloat(volEl.value) : '';
+      return true;
+    });
+
+    var skipFinBtn = document.getElementById('btn-skip-financials');
+    if (skipFinBtn) skipFinBtn.addEventListener('click', function() {
+      confirmed.financials = true;
+      checkStageAdvance();
+      saveProgress();
+      renderWorkspaceStage();
+    });
+
     bindConfirm('btn-confirm-ambition', 'ambition', function() {
       var goalCustom = document.getElementById('ob-goal-custom');
       if (goalCustom && goalCustom.value.trim()) data.goal = goalCustom.value.trim();
@@ -596,7 +677,7 @@ var Wizard = (function() {
     if (cardStage === 'A' && confirmed.identity && confirmed.customers) {
       cardStage = 'B';
     }
-    if (cardStage === 'B' && confirmed.economics && confirmed.ambition) {
+    if (cardStage === 'B' && confirmed.economics && confirmed.financials && confirmed.ambition) {
       cardStage = 'C';
       // Generate hypotheses
       if (data.aiHypotheses.length === 0) {
@@ -729,6 +810,30 @@ var Wizard = (function() {
     // Save hypotheses
     selectedHyps.forEach(function(h) { Store.addHypothesis(h); });
 
+    // Build and save simulation config
+    if (typeof SimulationTypes !== 'undefined') {
+      var simOverrides = {};
+      if (data.startingCash) simOverrides.startingCash = data.startingCash;
+      if (data.avgPrice || data.monthlyVolume) {
+        var tmpl = SimulationTypes.getDefaults(data.type);
+        var baseStreams = tmpl.revenueStreams;
+        simOverrides.revenueStreams = baseStreams.map(function(rs, i) {
+          var s = JSON.parse(JSON.stringify(rs));
+          if (i === 0) {
+            if (data.avgPrice) s.unitPrice = data.avgPrice;
+            if (data.monthlyVolume) s.unitsPerMonth = data.monthlyVolume;
+          }
+          return s;
+        });
+      }
+      var simConfig = SimulationTypes.buildConfigFromWizard(
+        Store.getBusiness(),
+        canvas,
+        simOverrides
+      );
+      Store.saveSimConfig(simConfig);
+    }
+
     // Clean up
     Store.setWizardComplete();
     Store.clearOnboardingData();
@@ -742,8 +847,8 @@ var Wizard = (function() {
   function reset() {
     stage = 'url';
     cardStage = 'A';
-    confirmed = { identity: false, customers: false, economics: false, ambition: false };
-    data = { websiteUrl: '', websiteData: null, brandColors: null, greeting: '', name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', toolPrefs: {}, aiHypotheses: [], selectedHypIds: null };
+    confirmed = { identity: false, customers: false, economics: false, financials: false, ambition: false };
+    data = { websiteUrl: '', websiteData: null, brandColors: null, greeting: '', name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', toolPrefs: {}, aiHypotheses: [], selectedHypIds: null, startingCash: '', avgPrice: '', monthlyVolume: '' };
     loading = false;
   }
 
