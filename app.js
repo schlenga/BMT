@@ -6,7 +6,7 @@ var App = (function() {
   function getRoute() {
     var hash = window.location.hash.replace('#', '') || '';
     if (!Store.isWizardComplete() && hash !== 'settings') return 'wizard';
-    return hash || 'tracker';
+    return hash || 'simulation';
   }
 
   function render() {
@@ -48,6 +48,15 @@ var App = (function() {
         Tracker.render(trackerWrap);
         return;
 
+      case 'simulation':
+        container.innerHTML = '';
+        container.appendChild(buildNav(route));
+        var simWrap = document.createElement('div');
+        simWrap.className = 'content';
+        container.appendChild(simWrap);
+        SimulationUI.render(simWrap);
+        return;
+
       case 'settings':
         container.innerHTML = '';
         container.appendChild(buildNav(route));
@@ -69,6 +78,7 @@ var App = (function() {
     h += '<div class="nav-links">';
 
     if (Store.isWizardComplete()) {
+      h += '<a href="#simulation" class="nav-link' + (route === 'simulation' ? ' active' : '') + '">Projection</a>';
       h += '<a href="#tracker" class="nav-link' + (route === 'tracker' ? ' active' : '') + '">Tracker</a>';
       h += '<a href="#canvas" class="nav-link' + (route === 'canvas' ? ' active' : '') + '">Canvas</a>';
     }

@@ -11,7 +11,9 @@ var Store = (function() {
     theme: 'bmt_theme',
     terminology: 'bmt_terminology',
     toolPrefs: 'bmt_tool_prefs',
-    promptState: 'bmt_prompt_state'
+    promptState: 'bmt_prompt_state',
+    simConfig: 'bmt_sim_config',
+    simResults: 'bmt_sim_results'
   };
 
   function uid() {
@@ -161,6 +163,12 @@ var Store = (function() {
     savePromptState(state);
   }
 
+  // Simulation config & results
+  function getSimConfig() { return get(KEYS.simConfig); }
+  function saveSimConfig(config) { set(KEYS.simConfig, config); }
+  function getSimResults() { return get(KEYS.simResults); }
+  function saveSimResults(results) { set(KEYS.simResults, results); }
+
   // Onboarding progress (resume on browser close)
   function getOnboardingData() { return get(KEYS.onboardingData); }
   function saveOnboardingData(data) { set(KEYS.onboardingData, data); }
@@ -175,6 +183,7 @@ var Store = (function() {
       wizardComplete: isWizardComplete(),
       toolPrefs: getToolPrefs(),
       promptState: getPromptState(),
+      simConfig: getSimConfig(),
       exportedAt: new Date().toISOString()
     }, null, 2);
   }
@@ -188,6 +197,7 @@ var Store = (function() {
       if (data.wizardComplete) setWizardComplete();
       if (data.toolPrefs) saveToolPrefs(data.toolPrefs);
       if (data.promptState) savePromptState(data.promptState);
+      if (data.simConfig) saveSimConfig(data.simConfig);
       return true;
     } catch(e) { return false; }
   }
@@ -225,6 +235,10 @@ var Store = (function() {
     savePromptState: savePromptState,
     completePrompt: completePrompt,
     dismissPrompt: dismissPrompt,
+    getSimConfig: getSimConfig,
+    saveSimConfig: saveSimConfig,
+    getSimResults: getSimResults,
+    saveSimResults: saveSimResults,
     getOnboardingData: getOnboardingData,
     saveOnboardingData: saveOnboardingData,
     clearOnboardingData: clearOnboardingData,
