@@ -22,6 +22,7 @@ var Wizard = (function() {
     teamSize: '',
     goal: '',
     concern: '',
+    toolPrefs: {},
     aiHypotheses: [],
     selectedHypIds: null
   };
@@ -716,6 +717,11 @@ var Wizard = (function() {
     var terminology = AI.getTerminology(data.type);
     Store.saveTerminology({ businessType: data.type, labels: terminology });
 
+    // Save tool preferences (for action prompts system)
+    if (data.toolPrefs && Object.keys(data.toolPrefs).length > 0) {
+      Store.saveToolPrefs(data.toolPrefs);
+    }
+
     // Build and save canvas
     var canvas = AI.buildCanvas(data);
     Store.saveCanvas(canvas);
@@ -737,7 +743,7 @@ var Wizard = (function() {
     stage = 'url';
     cardStage = 'A';
     confirmed = { identity: false, customers: false, economics: false, ambition: false };
-    data = { websiteUrl: '', websiteData: null, brandColors: null, greeting: '', name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', aiHypotheses: [], selectedHypIds: null };
+    data = { websiteUrl: '', websiteData: null, brandColors: null, greeting: '', name: '', type: 'service', description: '', proudOf: '', segments: [], revenueRange: '', costs: [], teamSize: '', goal: '', concern: '', toolPrefs: {}, aiHypotheses: [], selectedHypIds: null };
     loading = false;
   }
 
