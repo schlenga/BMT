@@ -1,0 +1,14 @@
+{
+  "name": "bmt",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Business Model Tracker",
+  "scripts": {
+    "test": "jest --verbose",
+    "test:ci": "jest --ci --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}
