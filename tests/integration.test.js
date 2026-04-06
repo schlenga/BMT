@@ -5,7 +5,7 @@ beforeAll(() => {
   global.confirm = jest.fn(() => true);
   global.prompt = jest.fn(() => null);
 
-  loadModules(['store', 'ai', 'prompts', 'canvas', 'tracker', 'wizard', 'app']);
+  loadModules(['store', 'ai', 'prompts', 'simulationTypes', 'simulation', 'simulationUI', 'canvas', 'tracker', 'wizard', 'app']);
 });
 
 beforeEach(() => {

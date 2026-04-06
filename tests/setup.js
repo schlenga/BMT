@@ -8,18 +8,24 @@ const MODULE_FILES = {
   store: 'store.js',
   ai: 'ai.js',
   prompts: 'prompts.js',
+  simulationTypes: 'simulation-types.js',
+  simulation: 'simulation.js',
+  simulationUI: 'simulation-ui.js',
   canvas: 'canvas.js',
   tracker: 'tracker.js',
   wizard: 'wizard.js',
   app: 'app.js'
 };
 
-const LOAD_ORDER = ['store', 'ai', 'prompts', 'canvas', 'tracker', 'wizard', 'app'];
+const LOAD_ORDER = ['store', 'ai', 'prompts', 'simulationTypes', 'simulation', 'simulationUI', 'canvas', 'tracker', 'wizard', 'app'];
 
 const MODULE_GLOBALS = {
   store: 'Store',
   ai: 'AI',
   prompts: 'Prompts',
+  simulationTypes: 'SimulationTypes',
+  simulation: 'SimEngine',
+  simulationUI: 'SimulationUI',
   canvas: 'Canvas',
   tracker: 'Tracker',
   wizard: 'Wizard',
