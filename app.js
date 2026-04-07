@@ -74,7 +74,7 @@ var App = (function() {
     var biz = Store.getBusiness();
     var brandName = biz && biz.name ? biz.name : 'BMT';
 
-    var h = '<div class="nav-brand" onclick="window.location.hash=\'#tracker\'">' + esc(brandName) + '</div>';
+    var h = '<div class="nav-brand" onclick="window.location.hash=\'#simulation\'">' + esc(brandName) + '</div>';
     h += '<div class="nav-links">';
 
     if (Store.isWizardComplete()) {

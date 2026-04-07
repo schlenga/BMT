@@ -839,7 +839,7 @@ var Wizard = (function() {
     Store.clearOnboardingData();
 
     setTimeout(function() {
-      window.location.hash = '#tracker';
+      window.location.hash = '#simulation';
       App.render();
     }, 800);
   }
