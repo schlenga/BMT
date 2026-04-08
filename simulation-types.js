@@ -410,9 +410,12 @@ var SimulationTypes = (function() {
       config.opex = canvas.costStructure.map(function(cs, i) {
         // Try to match with a default by name similarity
         var match = null;
+        var csWord = (cs.text || '').toLowerCase().split(' ')[0];
         for (var j = 0; j < baseOpex.length; j++) {
-          if (baseOpex[j].name.toLowerCase().indexOf(cs.text.toLowerCase().split(' ')[0]) >= 0 ||
-              cs.text.toLowerCase().indexOf(baseOpex[j].name.toLowerCase().split(' ')[0]) >= 0) {
+          var baseWord = baseOpex[j].name.toLowerCase().split(' ')[0];
+          if (csWord && baseWord &&
+              (baseOpex[j].name.toLowerCase().indexOf(csWord) >= 0 ||
+               cs.text.toLowerCase().indexOf(baseWord) >= 0)) {
             match = baseOpex[j];
             break;
           }

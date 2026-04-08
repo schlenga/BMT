@@ -440,13 +440,14 @@ var SimulationUI = (function() {
   }
 
   function sliderField(key, label, value, min, max, step, unit) {
+    var safeVal = (value != null && !isNaN(value)) ? value : 0;
     var display;
-    if (unit === '$' || unit === '$/mo') display = '$' + (value || 0).toLocaleString();
-    else if (unit === '%') display = (value || 0) + '%';
-    else display = (value || 0) + (unit || '');
+    if (unit === '$' || unit === '$/mo') display = '$' + safeVal.toLocaleString();
+    else if (unit === '%') display = safeVal + '%';
+    else display = safeVal + (unit || '');
 
     return '<div class="sim-slider"><div class="sim-slider-head"><span class="sim-slider-label">' + label + '</span><span class="sim-slider-val">' + display + '</span></div>' +
-      '<input type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + (value || min) + '" data-key="' + key + '"></div>';
+      '<input type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + safeVal + '" data-key="' + key + '"></div>';
   }
 
   // ── Event binding ──
