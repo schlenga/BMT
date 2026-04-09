@@ -87,4 +87,9 @@ function setupDOM() {
   document.body.innerHTML = '<div id="app"></div>';
 }
 
+// Polyfill for jsdom missing APIs
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = function() {};
+}
+
 module.exports = { loadModules, resetLocalStorage, setupDOM };
