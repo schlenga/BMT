@@ -272,6 +272,173 @@ describe('Integration: Wizard → Store → Canvas → Tracker', () => {
     expect(labelTexts).toContain('Burn Rate');
   });
 
+  test('wizard finish builds simulation config in store', () => {
+    // Simulate the wizard finish flow
+    const wizardData = {
+      name: 'Test SaaS',
+      type: 'saas',
+      description: 'A SaaS analytics tool',
+      proudOf: 'Real-time dashboards',
+      segments: ['Startups', 'Marketing managers'],
+      revenueRange: '$5K - $20K',
+      costs: ['Hosting & Infrastructure', 'Marketing & Ads'],
+      teamSize: '2-5',
+      goal: 'Grow revenue',
+      concern: 'Churn rate',
+      startingCash: 25000,
+      avgPrice: 49,
+      monthlyVolume: 100,
+      websiteData: null
+    };
+
+    // Save business (as wizard does)
+    Store.saveBusiness({
+      id: Store.uid(),
+      name: wizardData.name,
+      type: wizardData.type,
+      description: wizardData.description,
+      proudOf: wizardData.proudOf,
+      goal: wizardData.goal,
+      concern: wizardData.concern,
+      revenueRange: wizardData.revenueRange,
+      teamSize: wizardData.teamSize,
+      createdAt: '2025-01-01',
+      stage: 'validation'
+    });
+
+    // Build canvas (as wizard does)
+    const canvas = AI.buildCanvas(wizardData);
+    Store.saveCanvas(canvas);
+
+    // Build sim config (as wizard does)
+    const simOverrides = { startingCash: wizardData.startingCash };
+    const tmpl = SimulationTypes.getDefaults(wizardData.type);
+    const baseStreams = tmpl.revenueStreams;
+    simOverrides.revenueStreams = baseStreams.map(function(rs, i) {
+      var s = JSON.parse(JSON.stringify(rs));
+      if (i === 0) {
+        s.unitPrice = wizardData.avgPrice;
+        s.unitsPerMonth = wizardData.monthlyVolume;
+      }
+      return s;
+    });
+
+    const simConfig = SimulationTypes.buildConfigFromWizard(
+      Store.getBusiness(), canvas, simOverrides
+    );
+    Store.saveSimConfig(simConfig);
+    Store.setWizardComplete();
+
+    // Verify sim config
+    const savedConfig = Store.getSimConfig();
+    expect(savedConfig).toBeTruthy();
+    expect(savedConfig.startingCash).toBe(25000);
+    expect(savedConfig.revenueStreams[0].unitPrice).toBe(49);
+    expect(savedConfig.revenueStreams[0].unitsPerMonth).toBe(100);
+
+    // Run simulation and verify it produces valid output
+    const results = SimEngine.run(savedConfig);
+    expect(results.months.length).toBeGreaterThan(0);
+    expect(results.summary.year1Revenue).toBeGreaterThan(0);
+
+    // Verify SimulationUI can render with this config
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+    expect(container.querySelector('.sim-header')).toBeTruthy();
+    expect(container.querySelector('.sim-kpi-strip')).toBeTruthy();
+  });
+
+  test('simulation config persists through export and import', () => {
+    Store.saveBusiness({ name: 'Export Sim', type: 'retail', stage: 'validation' });
+    const config = SimulationTypes.getDefaults('retail');
+    config.startingCash = 42000;
+    Store.saveSimConfig(config);
+    Store.setWizardComplete();
+
+    const exported = Store.exportAll();
+    Store.resetAll();
+    expect(Store.getSimConfig()).toBeNull();
+
+    Store.importAll(exported);
+    const restored = Store.getSimConfig();
+    expect(restored).toBeTruthy();
+    expect(restored.startingCash).toBe(42000);
+    expect(restored.businessType).toBe('retail');
+  });
+
+  test('full flow: wizard data → simulation → scenario comparison', () => {
+    Store.saveBusiness({ name: 'Flow Test', type: 'restaurant', revenueRange: '$5K - $20K' });
+    const canvas = AI.buildCanvas({
+      segments: ['Locals'],
+      proudOf: 'Great food',
+      costs: ['Rent'],
+      revenueRange: '$5K - $20K',
+      teamSize: '2-5'
+    });
+    Store.saveCanvas(canvas);
+
+    const simConfig = SimulationTypes.buildConfigFromWizard(
+      Store.getBusiness(), canvas
+    );
+    Store.saveSimConfig(simConfig);
+    Store.setWizardComplete();
+
+    // Run all scenarios
+    const scenarios = SimEngine.runScenarios(simConfig);
+    expect(scenarios.pessimistic).toBeTruthy();
+    expect(scenarios.base).toBeTruthy();
+    expect(scenarios.optimistic).toBeTruthy();
+
+    // Pessimistic should have less revenue than optimistic
+    const pessY1 = scenarios.pessimistic.summary.year1Revenue;
+    const optY1 = scenarios.optimistic.summary.year1Revenue;
+    expect(optY1).toBeGreaterThan(pessY1);
+
+    // Render simulation UI
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+    expect(container.querySelector('.sim-kpi-strip')).toBeTruthy();
+  });
+
+  test('default route is simulation after wizard completion', () => {
+    Store.setWizardComplete();
+    Store.saveBusiness({ name: 'Route Test', type: 'service' });
+    window.location.hash = '';
+    App.render();
+    const app = document.getElementById('app');
+    expect(app.querySelector('.sim-header')).toBeTruthy();
+    expect(app.querySelector('.main-nav')).toBeTruthy();
+
+    // Nav should show Projection as active
+    const activeLink = app.querySelector('.nav-link.active');
+    expect(activeLink.textContent).toBe('Projection');
+  });
+
+  test('nav links allow switching between all pages', () => {
+    Store.setWizardComplete();
+    Store.saveBusiness({ name: 'Nav Test', type: 'service' });
+
+    // Start on simulation
+    window.location.hash = '';
+    App.render();
+    expect(document.getElementById('app').querySelector('.sim-header')).toBeTruthy();
+
+    // Switch to tracker
+    window.location.hash = '#tracker';
+    App.render();
+    expect(document.getElementById('app').querySelector('.tracker-header')).toBeTruthy();
+
+    // Switch to canvas
+    window.location.hash = '#canvas';
+    App.render();
+    expect(document.getElementById('app').querySelector('.bmc-grid')).toBeTruthy();
+
+    // Switch to settings
+    window.location.hash = '#settings';
+    App.render();
+    expect(document.getElementById('app').textContent).toContain('Settings');
+  });
+
   test('theme persistence through save and restore', () => {
     const palette = AI.generatePalette('#3498db');
     AI.applyTheme(palette);

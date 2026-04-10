@@ -321,6 +321,33 @@ describe('Tracker', () => {
       Tracker.addNew();
       expect(Store.getHypotheses()).toHaveLength(0);
     });
+
+    test('adds hypothesis and re-renders with nav preserved', () => {
+      Store.setWizardComplete();
+      Store.saveBusiness({ name: 'Test', type: 'service' });
+      window.location.hash = '#tracker';
+      App.render();
+
+      // Mock prompt sequence: statement, metric, target, unit
+      global.prompt
+        .mockReturnValueOnce('Test assumption')
+        .mockReturnValueOnce('Daily customers')
+        .mockReturnValueOnce('50')
+        .mockReturnValueOnce('customers/day');
+
+      Tracker.addNew();
+
+      const hyps = Store.getHypotheses();
+      expect(hyps).toHaveLength(1);
+      expect(hyps[0].statement).toBe('Test assumption');
+      expect(hyps[0].metric).toBe('Daily customers');
+      expect(hyps[0].target).toBe(50);
+
+      // Verify nav is still present (bug fix check)
+      const app = document.getElementById('app');
+      expect(app.querySelector('.main-nav')).toBeTruthy();
+      expect(app.querySelector('.hyp-card')).toBeTruthy();
+    });
   });
 });
 
@@ -461,6 +488,126 @@ describe('App', () => {
       expect(linkTexts).toContain('Canvas');
       expect(linkTexts).toContain('Settings');
     });
+  });
+});
+
+describe('SimulationUI', () => {
+  beforeEach(() => {
+    Store.setWizardComplete();
+    Store.saveBusiness({ name: 'Sim Test', type: 'service' });
+  });
+
+  test('renders all main sections', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    expect(container.querySelector('.sim-header')).toBeTruthy();
+    expect(container.querySelector('.sim-kpi-strip')).toBeTruthy();
+    expect(container.querySelector('.sim-svg')).toBeTruthy();
+    expect(container.querySelector('.sim-pl-table')).toBeTruthy();
+  });
+
+  test('renders scenario toggle with all three scenarios', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const scenarios = container.querySelectorAll('.sim-sc');
+    expect(scenarios).toHaveLength(3);
+    const labels = Array.from(scenarios).map(s => s.textContent);
+    expect(labels).toContain('Pessimistic');
+    expect(labels).toContain('Base Case');
+    expect(labels).toContain('Optimistic');
+  });
+
+  test('renders edit assumptions button', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const editBtn = container.querySelector('#sim-toggle-edit');
+    expect(editBtn).toBeTruthy();
+    expect(editBtn.textContent).toBe('Edit Assumptions');
+  });
+
+  test('clicking edit shows slider panel', () => {
+    // Must render into DOM-attached element (bindEvents uses document.getElementById)
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    const container = document.createElement('div');
+    app.appendChild(container);
+    SimulationUI.render(container);
+
+    const editBtn = document.getElementById('sim-toggle-edit');
+    editBtn.click();
+
+    // After click, edit panel should be visible
+    expect(container.querySelector('.sim-edit-panel')).toBeTruthy();
+    expect(container.querySelectorAll('input[type=range]').length).toBeGreaterThan(0);
+  });
+
+  test('scenario click switches active scenario', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const pessimistic = container.querySelector('.sim-sc[data-scenario="pessimistic"]');
+    pessimistic.click();
+
+    const active = container.querySelector('.sim-sc.active');
+    expect(active.dataset.scenario).toBe('pessimistic');
+  });
+
+  test('renders KPI cards with values', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const kpis = container.querySelectorAll('.sim-kpi');
+    expect(kpis.length).toBeGreaterThanOrEqual(6);
+
+    const labels = Array.from(kpis).map(k => k.querySelector('.sim-kpi-label').textContent);
+    expect(labels).toContain('Break-even');
+    expect(labels).toContain('Y1 Revenue');
+    expect(labels).toContain('Gross Margin');
+  });
+
+  test('renders revenue stream breakdown', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    expect(container.textContent).toContain('Revenue Streams');
+    const streamBadges = container.querySelectorAll('.sim-type-badge');
+    expect(streamBadges.length).toBeGreaterThan(0);
+  });
+
+  test('saves sim config to store', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const config = Store.getSimConfig();
+    expect(config).toBeTruthy();
+    expect(config.revenueStreams.length).toBeGreaterThan(0);
+  });
+
+  test('uses stored sim config when available', () => {
+    const customConfig = SimulationTypes.getDefaults('restaurant');
+    customConfig.startingCash = 77777;
+    Store.saveSimConfig(customConfig);
+
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const config = Store.getSimConfig();
+    expect(config.startingCash).toBe(77777);
+  });
+
+  test('P&L table shows correct row labels', () => {
+    const container = document.createElement('div');
+    SimulationUI.render(container);
+
+    const tableText = container.querySelector('.sim-pl-wrap').textContent;
+    expect(tableText).toContain('Revenue');
+    expect(tableText).toContain('COGS');
+    expect(tableText).toContain('Gross Profit');
+    expect(tableText).toContain('Net Income');
+    expect(tableText).toContain('Cash Balance');
   });
 });
 

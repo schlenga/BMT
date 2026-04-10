@@ -482,6 +482,45 @@ describe('AI', () => {
     });
   });
 
+  describe('parseJSON()', () => {
+    test('parses valid JSON string', () => {
+      const result = AI.parseJSON('{"name":"test","value":42}');
+      expect(result).toEqual({ name: 'test', value: 42 });
+    });
+
+    test('extracts JSON from markdown code block', () => {
+      const result = AI.parseJSON('Here is the response:\n```json\n{"hypotheses":[{"statement":"test"}]}\n```\nEnd');
+      expect(result).toEqual({ hypotheses: [{ statement: 'test' }] });
+    });
+
+    test('extracts JSON from code block without json tag', () => {
+      const result = AI.parseJSON('```\n{"key":"value"}\n```');
+      expect(result).toEqual({ key: 'value' });
+    });
+
+    test('returns null for invalid JSON', () => {
+      expect(AI.parseJSON('not json at all')).toBeNull();
+    });
+
+    test('returns null for null input', () => {
+      expect(AI.parseJSON(null)).toBeNull();
+    });
+
+    test('returns null for empty string', () => {
+      expect(AI.parseJSON('')).toBeNull();
+    });
+
+    test('handles JSON with whitespace around it', () => {
+      const result = AI.parseJSON('  \n  {"key": "value"}  \n  ');
+      expect(result).toEqual({ key: 'value' });
+    });
+
+    test('handles JSON array', () => {
+      const result = AI.parseJSON('[1, 2, 3]');
+      expect(result).toEqual([1, 2, 3]);
+    });
+  });
+
   describe('buildCanvas()', () => {
     test('builds canvas from wizard data with segments', () => {
       const canvas = AI.buildCanvas({

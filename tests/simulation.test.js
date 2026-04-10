@@ -92,6 +92,32 @@ describe('SimulationTypes', () => {
     });
   });
 
+  describe('getTemplate()', () => {
+    test('returns raw template for known type', () => {
+      const tmpl = SimulationTypes.getTemplate('restaurant');
+      expect(tmpl.label).toBe('Restaurant / Food & Drink');
+      expect(tmpl.revenueStreams).toBeTruthy();
+      expect(tmpl.revenueStreams.length).toBeGreaterThan(0);
+      expect(tmpl.startingCash).toBeGreaterThan(0);
+      expect(tmpl.kpiLabels).toBeTruthy();
+    });
+
+    test('falls back to service for unknown type', () => {
+      const tmpl = SimulationTypes.getTemplate('nonexistent');
+      expect(tmpl.label).toBe('Service / Consulting');
+    });
+
+    test('returns template with kpiLabels for each type', () => {
+      ['restaurant', 'retail', 'service', 'saas', 'ecommerce', 'subscription'].forEach(type => {
+        const tmpl = SimulationTypes.getTemplate(type);
+        expect(tmpl.kpiLabels).toBeTruthy();
+        expect(tmpl.kpiLabels.units).toBeTruthy();
+        expect(tmpl.kpiLabels.revenue).toBeTruthy();
+        expect(tmpl.kpiLabels.customers).toBeTruthy();
+      });
+    });
+  });
+
   describe('buildConfigFromWizard()', () => {
     test('builds config from business and canvas data', () => {
       const business = { type: 'restaurant', name: 'Test Cafe', revenueRange: '$5K - $20K' };

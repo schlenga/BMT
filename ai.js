@@ -722,6 +722,7 @@ var AI = (function() {
     applyTheme: applyTheme,
     restoreTheme: restoreTheme,
     analyzeWebsite: analyzeWebsite,
+    parseJSON: parseJSON,
     generateHypotheses: generateHypotheses,
     keywordFallbackHypotheses: keywordFallbackHypotheses,
     buildCanvas: buildCanvas
