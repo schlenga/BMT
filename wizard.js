@@ -396,7 +396,7 @@ var Wizard = (function() {
       h += '<span class="ob-hyp-cat" style="background:' + (catColors[hyp.category] || '#999') + '">' + esc(hyp.category) + '</span>';
       h += '<div class="ob-hyp-statement">' + esc(hyp.statement) + '</div>';
       if (hyp.rationale) h += '<div class="ob-hyp-detail">' + esc(hyp.rationale) + '</div>';
-      h += '<div class="ob-hyp-detail">Target: ' + hyp.target + ' ' + esc(hyp.unit || '') + ' &mdash; ' + esc(hyp.timeframe || '') + '</div>';
+      h += '<div class="ob-hyp-detail">Target: ' + esc(String(hyp.target)) + ' ' + esc(hyp.unit || '') + ' &mdash; ' + esc(hyp.timeframe || '') + '</div>';
       h += '</div></label>';
     });
 
@@ -570,9 +570,9 @@ var Wizard = (function() {
       var cashEl = document.getElementById('ob-cash');
       var priceEl = document.getElementById('ob-price');
       var volEl = document.getElementById('ob-volume');
-      data.startingCash = cashEl && cashEl.value ? parseFloat(cashEl.value) : '';
-      data.avgPrice = priceEl && priceEl.value ? parseFloat(priceEl.value) : '';
-      data.monthlyVolume = volEl && volEl.value ? parseFloat(volEl.value) : '';
+      data.startingCash = cashEl && cashEl.value !== '' ? parseFloat(cashEl.value) : '';
+      data.avgPrice = priceEl && priceEl.value !== '' ? parseFloat(priceEl.value) : '';
+      data.monthlyVolume = volEl && volEl.value !== '' ? parseFloat(volEl.value) : '';
       return true;
     });
 
@@ -813,8 +813,8 @@ var Wizard = (function() {
     // Build and save simulation config
     if (typeof SimulationTypes !== 'undefined') {
       var simOverrides = {};
-      if (data.startingCash) simOverrides.startingCash = data.startingCash;
-      if (data.avgPrice || data.monthlyVolume) {
+      if (data.startingCash !== '' && data.startingCash != null) simOverrides.startingCash = data.startingCash;
+      if (data.avgPrice !== '' || data.monthlyVolume !== '') {
         var tmpl = SimulationTypes.getDefaults(data.type);
         var baseStreams = tmpl.revenueStreams;
         simOverrides.revenueStreams = baseStreams.map(function(rs, i) {

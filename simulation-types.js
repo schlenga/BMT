@@ -410,11 +410,16 @@ var SimulationTypes = (function() {
       config.opex = canvas.costStructure.map(function(cs, i) {
         // Try to match with a default by name similarity
         var match = null;
-        for (var j = 0; j < baseOpex.length; j++) {
-          if (baseOpex[j].name.toLowerCase().indexOf(cs.text.toLowerCase().split(' ')[0]) >= 0 ||
-              cs.text.toLowerCase().indexOf(baseOpex[j].name.toLowerCase().split(' ')[0]) >= 0) {
-            match = baseOpex[j];
-            break;
+        var csText = (cs.text || '').toLowerCase();
+        var csFirst = csText.split(' ')[0];
+        if (csFirst) {
+          for (var j = 0; j < baseOpex.length; j++) {
+            var opexFirst = baseOpex[j].name.toLowerCase().split(' ')[0];
+            if (baseOpex[j].name.toLowerCase().indexOf(csFirst) >= 0 ||
+                csText.indexOf(opexFirst) >= 0) {
+              match = baseOpex[j];
+              break;
+            }
           }
         }
         return {

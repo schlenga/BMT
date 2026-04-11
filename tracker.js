@@ -146,9 +146,9 @@ var Tracker = (function() {
       h += '<span class="hyp-metric-label">' + esc(hyp.metric || 'Target') + '</span>';
       h += '<span class="hyp-metric-val">';
       if (latest) {
-        h += '<strong>' + latest.value + '</strong> / ' + hyp.target + ' ' + esc(hyp.unit || '');
+        h += '<strong>' + esc(String(latest.value)) + '</strong> / ' + esc(String(hyp.target)) + ' ' + esc(hyp.unit || '');
       } else {
-        h += 'Target: ' + hyp.target + ' ' + esc(hyp.unit || '');
+        h += 'Target: ' + esc(String(hyp.target)) + ' ' + esc(hyp.unit || '');
       }
       h += '</span>';
       h += '</div>';
