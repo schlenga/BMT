@@ -16,10 +16,6 @@ var App = (function() {
     // Update nav
     updateNav(route);
 
-    // Clear and render
-    var content = document.createElement('div');
-    content.className = 'content';
-
     switch(route) {
       case 'wizard':
         container.innerHTML = '';

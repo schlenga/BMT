@@ -865,10 +865,7 @@ var Wizard = (function() {
       if (saved.data) data = saved.data;
       // Restore theme if brand colors were saved
       if (data.brandColors && data.brandColors.primary) {
-        var palette = AI.generatePalette(data.brandColors.primary, data.brandColors.secondary);
-        if (palette) {
-          AI.restoreTheme();
-        }
+        AI.restoreTheme();
       }
     }
   }
