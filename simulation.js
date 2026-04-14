@@ -228,8 +228,14 @@ var SimEngine = (function() {
       // Break-even = first month where net income is positive AND stays positive for 2 more months
       if (breakEvenMonth === null && m.netIncome > 0) {
         var sustained = true;
-        for (var j = i + 1; j < Math.min(i + 3, months.length); j++) {
-          if (months[j].netIncome <= 0) { sustained = false; break; }
+        var remaining = months.length - (i + 1);
+        if (remaining < 2) {
+          // Not enough months left to confirm sustainability
+          sustained = false;
+        } else {
+          for (var j = i + 1; j < Math.min(i + 3, months.length); j++) {
+            if (months[j].netIncome <= 0) { sustained = false; break; }
+          }
         }
         if (sustained) breakEvenMonth = m.month;
       }

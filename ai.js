@@ -724,6 +724,7 @@ var AI = (function() {
     analyzeWebsite: analyzeWebsite,
     generateHypotheses: generateHypotheses,
     keywordFallbackHypotheses: keywordFallbackHypotheses,
+    parseJSON: parseJSON,
     buildCanvas: buildCanvas
   };
 })();

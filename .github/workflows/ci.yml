@@ -27,6 +27,21 @@ jobs:
       - name: Run tests
         run: npm run test:ci
 
+      - name: Verify all tests pass
+        if: matrix.node-version == 22
+        run: |
+          RESULT=$(npx jest --ci --json 2>/dev/null | node -e "
+            let data = '';
+            process.stdin.on('data', d => data += d);
+            process.stdin.on('end', () => {
+              const r = JSON.parse(data);
+              console.log('Tests: ' + r.numPassedTests + ' passed, ' + r.numFailedTests + ' failed');
+              console.log('Suites: ' + r.numPassedTestSuites + ' passed, ' + r.numFailedTestSuites + ' failed');
+              if (r.numFailedTests > 0 || r.numFailedTestSuites > 0) process.exit(1);
+            });
+          ")
+          echo "$RESULT"
+
       - name: Upload coverage
         if: matrix.node-version == 22
         uses: actions/upload-artifact@v4
