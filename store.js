@@ -191,13 +191,13 @@ var Store = (function() {
   function importAll(jsonStr) {
     try {
       var data = JSON.parse(jsonStr);
-      if (data.business) saveBusiness(data.business);
-      if (data.canvas) saveCanvas(data.canvas);
-      if (data.hypotheses) saveHypotheses(data.hypotheses);
+      if (data.business != null) saveBusiness(data.business);
+      if (data.canvas != null) saveCanvas(data.canvas);
+      if (data.hypotheses != null) saveHypotheses(data.hypotheses);
       if (data.wizardComplete) setWizardComplete();
-      if (data.toolPrefs) saveToolPrefs(data.toolPrefs);
-      if (data.promptState) savePromptState(data.promptState);
-      if (data.simConfig) saveSimConfig(data.simConfig);
+      if (data.toolPrefs != null) saveToolPrefs(data.toolPrefs);
+      if (data.promptState != null) savePromptState(data.promptState);
+      if (data.simConfig != null) saveSimConfig(data.simConfig);
       return true;
     } catch(e) { return false; }
   }

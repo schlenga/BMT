@@ -33,3 +33,41 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+
+  lint-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify no test files are empty
+        run: |
+          for f in tests/*.test.js; do
+            if [ ! -s "$f" ]; then
+              echo "ERROR: Empty test file: $f"
+              exit 1
+            fi
+          done
+          echo "All test files have content"
+
+      - name: Verify all source files are covered by tests
+        run: |
+          missing=0
+          for src in store.js ai.js prompts.js simulation.js simulation-types.js simulation-ui.js canvas.js tracker.js wizard.js app.js; do
+            if ! grep -rl "$src" tests/ > /dev/null 2>&1; then
+              echo "WARNING: $src may not be covered by tests"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Some source files may lack test coverage"
+          fi
+          echo "Coverage check complete"

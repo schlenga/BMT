@@ -125,7 +125,7 @@ var SimulationUI = (function() {
     var range = allMax - allMin || 1;
 
     function yPos(val) { return 18 + cH - ((val - allMin) / range * cH); }
-    function xPos(idx) { return pad + (idx / (numMonths - 1)) * cW; }
+    function xPos(idx) { return pad + (numMonths > 1 ? (idx / (numMonths - 1)) * cW : cW / 2); }
 
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="sim-svg" preserveAspectRatio="xMidYMid meet">';
 
@@ -191,6 +191,8 @@ var SimulationUI = (function() {
         if (i < 12 || i % 6 === 0) displayMonths.push(months[i]);
       }
     }
+
+    if (displayMonths.length === 0) return '<svg class="sim-svg"></svg>';
 
     var maxV = 0;
     for (var i = 0; i < displayMonths.length; i++) {

@@ -570,9 +570,9 @@ var Wizard = (function() {
       var cashEl = document.getElementById('ob-cash');
       var priceEl = document.getElementById('ob-price');
       var volEl = document.getElementById('ob-volume');
-      data.startingCash = cashEl && cashEl.value ? parseFloat(cashEl.value) : '';
-      data.avgPrice = priceEl && priceEl.value ? parseFloat(priceEl.value) : '';
-      data.monthlyVolume = volEl && volEl.value ? parseFloat(volEl.value) : '';
+      data.startingCash = cashEl && cashEl.value !== '' ? parseFloat(cashEl.value) : '';
+      data.avgPrice = priceEl && priceEl.value !== '' ? parseFloat(priceEl.value) : '';
+      data.monthlyVolume = volEl && volEl.value !== '' ? parseFloat(volEl.value) : '';
       return true;
     });
 
