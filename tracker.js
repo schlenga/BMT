@@ -482,8 +482,7 @@ var Tracker = (function() {
       priority: 'important'
     });
 
-    var container = document.getElementById('app');
-    render(container);
+    App.render();
   }
 
   function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

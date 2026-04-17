@@ -867,7 +867,7 @@ var Wizard = (function() {
       if (data.brandColors && data.brandColors.primary) {
         var palette = AI.generatePalette(data.brandColors.primary, data.brandColors.secondary);
         if (palette) {
-          AI.restoreTheme();
+          AI.applyTheme(palette);
         }
       }
     }

@@ -184,6 +184,8 @@ var Store = (function() {
       toolPrefs: getToolPrefs(),
       promptState: getPromptState(),
       simConfig: getSimConfig(),
+      theme: getTheme(),
+      terminology: getTerminology(),
       exportedAt: new Date().toISOString()
     }, null, 2);
   }
@@ -198,6 +200,8 @@ var Store = (function() {
       if (data.toolPrefs) saveToolPrefs(data.toolPrefs);
       if (data.promptState) savePromptState(data.promptState);
       if (data.simConfig) saveSimConfig(data.simConfig);
+      if (data.theme) saveTheme(data.theme);
+      if (data.terminology) saveTerminology(data.terminology);
       return true;
     } catch(e) { return false; }
   }

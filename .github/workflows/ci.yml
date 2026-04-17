@@ -33,3 +33,35 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check test coverage thresholds
+        run: |
+          npx jest --ci --coverage --coverageReporters=json-summary 2>/dev/null
+          node -e "
+            const cov = require('./coverage/coverage-summary.json');
+            const total = cov.total;
+            const stmts = total.statements.pct;
+            const branches = total.branches.pct;
+            const funcs = total.functions.pct;
+            const lines = total.lines.pct;
+            console.log('Coverage: statements=' + stmts + '% branches=' + branches + '% functions=' + funcs + '% lines=' + lines + '%');
+            if (stmts < 40 || branches < 30 || funcs < 40 || lines < 40) {
+              console.error('Coverage below minimum thresholds (40% statements, 30% branches, 40% functions, 40% lines)');
+              process.exit(1);
+            }
+            console.log('Coverage thresholds met.');
+          "
