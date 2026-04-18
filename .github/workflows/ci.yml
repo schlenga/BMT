@@ -33,3 +33,21 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for merge conflict markers
+        run: |
+          if grep -rn '<<<<<<< \|>>>>>>> \|=======' --include='*.js' --include='*.html' --include='*.css' .; then
+            echo "::error::Merge conflict markers found in source files"
+            exit 1
+          fi
+
+      - name: Check for console.log in production code
+        run: |
+          if grep -rn 'console\.log' --include='*.js' . --exclude-dir=node_modules --exclude-dir=tests --exclude-dir=archive; then
+            echo "::warning::console.log found in production code"
+          fi

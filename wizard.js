@@ -282,8 +282,8 @@ var Wizard = (function() {
     var kpi = (typeof SimulationTypes !== 'undefined') ? SimulationTypes.getKpiLabels(type) : { units: 'units', revenue: 'revenue', customers: 'customers' };
 
     // Smart defaults from template
-    var defaultPrice = tmpl ? tmpl.revenueStreams[0].unitPrice : 50;
-    var defaultVolume = tmpl ? tmpl.revenueStreams[0].unitsPerMonth : 100;
+    var defaultPrice = tmpl && tmpl.revenueStreams && tmpl.revenueStreams[0] ? tmpl.revenueStreams[0].unitPrice : 50;
+    var defaultVolume = tmpl && tmpl.revenueStreams && tmpl.revenueStreams[0] ? tmpl.revenueStreams[0].unitsPerMonth : 100;
     var defaultCash = tmpl ? tmpl.startingCash : 10000;
 
     var h = '<div class="ob-card' + (isConfirmed ? ' ob-card-done' : '') + ' anim-slide-up ob-delay-1" data-card="financials">';
