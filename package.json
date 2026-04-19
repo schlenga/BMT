@@ -5,6 +5,13 @@
   "description": "BMT — persona-adaptive business cockpit for SMBs. Keep doing what you do best.",
   "scripts": {
     "start": "python3 -m http.server 8000",
-    "test": "echo 'v2 has no tests yet — v1 suite is in archive/v1/tests/' && exit 0"
+    "test": "node --test tests/unit/*.test.js tests/contract/*.test.js tests/integration/*.test.js tests/eval/*.test.js tests/drills/*.test.js tests/security/*.test.js",
+    "test:unit": "node --test tests/unit/*.test.js",
+    "test:contract": "node --test tests/contract/*.test.js",
+    "test:integration": "node --test tests/integration/*.test.js",
+    "test:eval": "node --test tests/eval/*.test.js",
+    "test:drills": "node --test tests/drills/*.test.js",
+    "test:security": "node --test tests/security/*.test.js",
+    "test:ci": "node --test --test-reporter=spec tests/unit/*.test.js tests/contract/*.test.js tests/integration/*.test.js tests/eval/*.test.js tests/drills/*.test.js tests/security/*.test.js"
   }
 }

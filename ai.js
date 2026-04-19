@@ -108,13 +108,16 @@ var AI = (function() {
   }
 
   // Deterministic offline guess — keyword match on whatever's on the bench.
+  // Salon/barber/studio is matched FIRST so "barber" doesn't get caught by
+  // the "bar" token in the nadia regex. Word boundaries on short tokens
+  // (\bbar\b) keep the matcher honest on adversarial inputs.
   function offlineExtrapolate(bench) {
     var text = bench.map(function(b){ return (typeof b.value === 'string' ? b.value : JSON.stringify(b.value || '')); }).join(' ').toLowerCase();
     var persona = 'lina';
-    if (/plumb|electric|van|crew|dispatch/i.test(text)) persona = 'klaus';
-    else if (/consult|agency|marketing|design|freelance|proposal/i.test(text)) persona = 'franka';
-    else if (/caf[eé]|restaurant|food|bakery|bar|kitchen/i.test(text)) persona = 'nadia';
-    else if (/salon|hair|nail|beauty|studio|barber/i.test(text)) persona = 'lina';
+    if (/plumb|electric|\bvans?\b|\bcrew\b|dispatch|boiler/i.test(text)) persona = 'klaus';
+    else if (/consult|agency|marketing|\bdesign\b|freelance|proposal/i.test(text)) persona = 'franka';
+    else if (/salon|\bhair\b|\bnail\b|beauty|studio|barber/i.test(text)) persona = 'lina';
+    else if (/caf[eé]|restaurant|\bfood\b|bakery|\bbar\b|kitchen|bistro|wine/i.test(text)) persona = 'nadia';
     var type = {
       lina: 'small salon or studio',
       klaus: 'trades shop with a small crew',
