@@ -104,9 +104,22 @@ scenarios.js        # Stage 09 (goal picker / sandbox / COO-initiated)
 
 worker/worker.js    # Cloudflare Worker proxy (cost protection + origin lock)
 
+tests/              # node:test suite mapped 1:1 to the BMT Test Suite design
 archive/v1/         # The previous product (BMC + hypothesis tracker)
-archive/design/     # The handoff bundle this was built from
+archive/design/     # The handoff bundles this was built from (User Flow + Test Suite)
 ```
+
+## Tests
+
+```bash
+npm test          # 68 tests, 0 dependencies, ~1.7s
+```
+
+The suite is the implementation of
+[`archive/design/project/BMT Test Suite.html`](archive/design/project/BMT%20Test%20Suite.html)
+— see [`tests/README.md`](tests/README.md) for the per-ticket coverage map
+(U-101..U-107, C-101/105/110, I-01..I-06, V-01/02/05/06, D-201..D-206,
+S-01/02/04/06).
 
 ## Where this is still thin (honest TODO)
 
@@ -114,7 +127,7 @@ archive/design/     # The handoff bundle this was built from
 - Auth doesn't actually call an SMS provider — any 6-digit code passes.
 - Shock detection is seeded (RFP, rent, retirement). A real detector would watch an inbox/calendar feed.
 - The `/v1/messages` Cloudflare Worker is unchanged from v1 except for the tighter field allowlist and the bumped rate limit.
-- No tests in this pass. v1 had a jest suite; it's in `archive/v1/tests/` if you want to adapt it.
+- ~~No tests in this pass.~~ Suite implemented per `archive/design/project/BMT Test Suite.html` — see [`tests/README.md`](tests/README.md). 68 tests, 0 dependencies, ~1.7s total. v1's jest suite is preserved in `archive/v1/tests/` for reference.
 - The simulation is intentionally simple. It's *useful abstraction*, not a deep simulator. More parameters and more observation sources (bank, calendar, POS) are the next big unlock.
 
 ## Personas the design is built for

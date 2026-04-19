@@ -1,0 +1,177 @@
+{
+  "_meta": {
+    "purpose": "V-01 golden set — real-shape onboardings with expected outputs.",
+    "schema": "id,bench[],persona_expected,businessType_pattern,must_not_be",
+    "design_ref": "BMT Test Suite stage 07 · golden 500 (we ship a representative 24)"
+  },
+  "rows": [
+    {
+      "id": "gs-001",
+      "bench": [{"kind": "describe", "value": "I run a 2-chair hair salon in Berlin Kreuzberg"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": { "persona": ["klaus", "franka"] }
+    },
+    {
+      "id": "gs-002",
+      "bench": [{"kind": "describe", "value": "small barber shop, walk-ins only"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": { "persona": ["klaus"] }
+    },
+    {
+      "id": "gs-003",
+      "bench": [{"kind": "describe", "value": "nail bar in Munich"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-004",
+      "bench": [{"kind": "describe", "value": "tattoo studio with 1 chair"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "studio",
+      "must_not_be": { "persona": ["klaus"] }
+    },
+    {
+      "id": "gs-005",
+      "bench": [{"kind": "url", "value": "https://linahair.de"}, {"kind": "describe", "value": "salon"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-006",
+      "bench": [{"kind": "describe", "value": "plumbing shop, 12 staff, 4 vans"}],
+      "persona_expected": "klaus",
+      "businessType_pattern": "trades|crew",
+      "must_not_be": { "persona": ["lina", "franka"] }
+    },
+    {
+      "id": "gs-007",
+      "bench": [{"kind": "describe", "value": "electricians, dispatch all day"}],
+      "persona_expected": "klaus",
+      "businessType_pattern": "trades|crew",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-008",
+      "bench": [{"kind": "describe", "value": "we run 3 vans, mostly boiler installs"}],
+      "persona_expected": "klaus",
+      "businessType_pattern": "trades|crew",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-009",
+      "bench": [{"kind": "describe", "value": "marketing consulting agency, 2 freelancers"}],
+      "persona_expected": "franka",
+      "businessType_pattern": "consult|agency",
+      "must_not_be": { "persona": ["klaus", "lina"] }
+    },
+    {
+      "id": "gs-010",
+      "bench": [{"kind": "describe", "value": "freelance designer, mostly proposals"}],
+      "persona_expected": "franka",
+      "businessType_pattern": "consult|agency",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-011",
+      "bench": [{"kind": "describe", "value": "small consulting practice for SaaS startups"}],
+      "persona_expected": "franka",
+      "businessType_pattern": "consult|agency",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-012",
+      "bench": [{"kind": "describe", "value": "neighbourhood café with 6 staff"}],
+      "persona_expected": "nadia",
+      "businessType_pattern": "caf|food",
+      "must_not_be": { "persona": ["franka"] }
+    },
+    {
+      "id": "gs-013",
+      "bench": [{"kind": "describe", "value": "small bakery and coffee bar"}],
+      "persona_expected": "nadia",
+      "businessType_pattern": "caf|food",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-014",
+      "bench": [{"kind": "describe", "value": "restaurant in Mitte, 40 covers"}],
+      "persona_expected": "nadia",
+      "businessType_pattern": "caf|food",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-015",
+      "bench": [{"kind": "describe", "value": "kitchen + bar, breakfast only"}],
+      "persona_expected": "nadia",
+      "businessType_pattern": "caf|food",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-016",
+      "bench": [{"kind": "describe", "value": "salon with 3 chairs and a nail station"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-017",
+      "bench": [{"kind": "describe", "value": "dispatching plumbers from a small office"}],
+      "persona_expected": "klaus",
+      "businessType_pattern": "trades|crew",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-018",
+      "bench": [{"kind": "describe", "value": "design agency, 2-person, mostly remote"}],
+      "persona_expected": "franka",
+      "businessType_pattern": "consult|agency",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-019",
+      "bench": [{"kind": "describe", "value": "café in Wedding, vegan menu"}],
+      "persona_expected": "nadia",
+      "businessType_pattern": "caf|food",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-020",
+      "bench": [{"kind": "describe", "value": "beauty salon, lashes & brows"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-021",
+      "bench": [{"kind": "describe", "value": "two-van electric crew, mostly new builds"}],
+      "persona_expected": "klaus",
+      "businessType_pattern": "trades|crew",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-022",
+      "bench": [{"kind": "describe", "value": "freelance marketing consultant, solo"}],
+      "persona_expected": "franka",
+      "businessType_pattern": "consult|agency",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-023",
+      "bench": [{"kind": "describe", "value": "bistro and wine bar"}],
+      "persona_expected": "nadia",
+      "businessType_pattern": "caf|food",
+      "must_not_be": {}
+    },
+    {
+      "id": "gs-024",
+      "bench": [{"kind": "describe", "value": "hair studio with online booking"}],
+      "persona_expected": "lina",
+      "businessType_pattern": "salon|studio",
+      "must_not_be": {}
+    }
+  ]
+}
