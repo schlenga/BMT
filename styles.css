@@ -279,6 +279,14 @@ textarea { min-height: 72px; resize: vertical; font-family: 'Kalam', sans-serif;
 }
 .tab.active { background: var(--ink); color: var(--paper); }
 
+/* Persona card — composes .sketch, just overrides radius + adds padding */
+.persona { border-radius: 12px 14px 12px 16px; padding: 14px; }
+.persona-name { font-family: 'Caveat', cursive; font-weight: 600; font-size: 26px; line-height: 1; margin: 8px 0 2px; }
+.persona-list { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink); line-height: 1.35; }
+.persona-list li { margin-bottom: 2px; }
+.jtbd-list { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.45; }
+.jtbd-list li { margin-bottom: 3px; }
+
 /* Persona-tinted cockpit surfaces */
 .cockpit { padding: 18px; min-height: 60vh; }
 .cockpit-lina   { background: oklch(0.97 0.02 20);  border-color: oklch(0.45 0.12 20); }
