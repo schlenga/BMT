@@ -341,6 +341,21 @@ describe('Store', () => {
       const result = Store.importAll(JSON.stringify({}));
       expect(result).toBe(true);
     });
+
+    test('exportAll includes simResults', () => {
+      Store.saveSimResults({ months: [{ month: 1, revenue: 500 }] });
+      const exported = JSON.parse(Store.exportAll());
+      expect(exported.simResults).toBeTruthy();
+      expect(exported.simResults.months[0].revenue).toBe(500);
+    });
+
+    test('importAll restores simResults', () => {
+      const data = { simResults: { months: [{ month: 1, revenue: 999 }] } };
+      Store.importAll(JSON.stringify(data));
+      const results = Store.getSimResults();
+      expect(results).toBeTruthy();
+      expect(results.months[0].revenue).toBe(999);
+    });
   });
 
   describe('resetAll', () => {
