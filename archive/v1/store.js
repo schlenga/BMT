@@ -1,0 +1,249 @@
+// store.js — localStorage persistence layer for BMT
+'use strict';
+
+var Store = (function() {
+  var KEYS = {
+    business: 'bmt_business',
+    canvas: 'bmt_canvas',
+    hypotheses: 'bmt_hypotheses',
+    wizardComplete: 'bmt_wizard_complete',
+    onboardingData: 'bmt_onboarding_data',
+    theme: 'bmt_theme',
+    terminology: 'bmt_terminology',
+    toolPrefs: 'bmt_tool_prefs',
+    promptState: 'bmt_prompt_state',
+    simConfig: 'bmt_sim_config',
+    simResults: 'bmt_sim_results'
+  };
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  }
+
+  function get(key) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  }
+
+  function set(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+
+  // Business
+  function getBusiness() { return get(KEYS.business); }
+  function saveBusiness(biz) { set(KEYS.business, biz); }
+
+  // Canvas
+  function getCanvas() {
+    return get(KEYS.canvas) || defaultCanvas();
+  }
+  function saveCanvas(canvas) { set(KEYS.canvas, canvas); }
+
+  function defaultCanvas() {
+    return {
+      customerSegments: [],
+      valueProp: [],
+      channels: [],
+      customerRelationships: [],
+      revenueStreams: [],
+      keyResources: [],
+      keyActivities: [],
+      keyPartners: [],
+      costStructure: []
+    };
+  }
+
+  // Add item to a canvas element
+  function addCanvasItem(element, text) {
+    var canvas = getCanvas();
+    if (!canvas[element]) canvas[element] = [];
+    var item = { id: uid(), text: text, notes: '' };
+    canvas[element].push(item);
+    saveCanvas(canvas);
+    return item;
+  }
+
+  function updateCanvasItem(element, id, text) {
+    var canvas = getCanvas();
+    if (!canvas[element]) return;
+    for (var i = 0; i < canvas[element].length; i++) {
+      if (canvas[element][i].id === id) {
+        canvas[element][i].text = text;
+        break;
+      }
+    }
+    saveCanvas(canvas);
+  }
+
+  function removeCanvasItem(element, id) {
+    var canvas = getCanvas();
+    if (!canvas[element]) return;
+    canvas[element] = canvas[element].filter(function(item) { return item.id !== id; });
+    saveCanvas(canvas);
+  }
+
+  // Hypotheses
+  function getHypotheses() { return get(KEYS.hypotheses) || []; }
+  function saveHypotheses(hyps) { set(KEYS.hypotheses, hyps); }
+
+  function addHypothesis(hyp) {
+    var hyps = getHypotheses();
+    hyp.id = hyp.id || uid();
+    hyp.createdAt = hyp.createdAt || new Date().toISOString().slice(0, 10);
+    hyp.status = hyp.status || 'testing';
+    hyp.actuals = hyp.actuals || [];
+    hyps.push(hyp);
+    saveHypotheses(hyps);
+    return hyp;
+  }
+
+  function updateHypothesis(id, updates) {
+    var hyps = getHypotheses();
+    for (var i = 0; i < hyps.length; i++) {
+      if (hyps[i].id === id) {
+        for (var k in updates) {
+          if (updates.hasOwnProperty(k)) hyps[i][k] = updates[k];
+        }
+        break;
+      }
+    }
+    saveHypotheses(hyps);
+  }
+
+  function removeHypothesis(id) {
+    var hyps = getHypotheses().filter(function(h) { return h.id !== id; });
+    saveHypotheses(hyps);
+  }
+
+  function addActual(hypId, actual) {
+    var hyps = getHypotheses();
+    for (var i = 0; i < hyps.length; i++) {
+      if (hyps[i].id === hypId) {
+        actual.date = actual.date || new Date().toISOString().slice(0, 10);
+        hyps[i].actuals.push(actual);
+        break;
+      }
+    }
+    saveHypotheses(hyps);
+  }
+
+  // Wizard
+  function isWizardComplete() { return get(KEYS.wizardComplete) === true; }
+  function setWizardComplete() { set(KEYS.wizardComplete, true); }
+
+  // Theme (brand colors palette)
+  function getTheme() { return get(KEYS.theme); }
+  function saveTheme(theme) { set(KEYS.theme, theme); }
+
+  // Terminology (adaptive labels)
+  function getTerminology() { return get(KEYS.terminology); }
+  function saveTerminology(terms) { set(KEYS.terminology, terms); }
+
+  // Tool preferences
+  function getToolPrefs() { return get(KEYS.toolPrefs) || {}; }
+  function saveToolPrefs(prefs) { set(KEYS.toolPrefs, prefs); }
+
+  // Prompt state (completed / dismissed)
+  function getPromptState() {
+    return get(KEYS.promptState) || { completed: [], dismissed: [] };
+  }
+  function savePromptState(state) { set(KEYS.promptState, state); }
+
+  function completePrompt(key, hypId) {
+    var state = getPromptState();
+    state.completed.push({ key: key, at: new Date().toISOString().slice(0, 10), hypId: hypId || null });
+    savePromptState(state);
+  }
+
+  function dismissPrompt(key) {
+    var state = getPromptState();
+    if (state.dismissed.indexOf(key) < 0) state.dismissed.push(key);
+    savePromptState(state);
+  }
+
+  // Simulation config & results
+  function getSimConfig() { return get(KEYS.simConfig); }
+  function saveSimConfig(config) { set(KEYS.simConfig, config); }
+  function getSimResults() { return get(KEYS.simResults); }
+  function saveSimResults(results) { set(KEYS.simResults, results); }
+
+  // Onboarding progress (resume on browser close)
+  function getOnboardingData() { return get(KEYS.onboardingData); }
+  function saveOnboardingData(data) { set(KEYS.onboardingData, data); }
+  function clearOnboardingData() { localStorage.removeItem(KEYS.onboardingData); }
+
+  // Export / Import
+  function exportAll() {
+    return JSON.stringify({
+      business: getBusiness(),
+      canvas: getCanvas(),
+      hypotheses: getHypotheses(),
+      wizardComplete: isWizardComplete(),
+      toolPrefs: getToolPrefs(),
+      promptState: getPromptState(),
+      simConfig: getSimConfig(),
+      exportedAt: new Date().toISOString()
+    }, null, 2);
+  }
+
+  function importAll(jsonStr) {
+    try {
+      var data = JSON.parse(jsonStr);
+      if (data.business) saveBusiness(data.business);
+      if (data.canvas) saveCanvas(data.canvas);
+      if (data.hypotheses) saveHypotheses(data.hypotheses);
+      if (data.wizardComplete) setWizardComplete();
+      if (data.toolPrefs) saveToolPrefs(data.toolPrefs);
+      if (data.promptState) savePromptState(data.promptState);
+      if (data.simConfig) saveSimConfig(data.simConfig);
+      return true;
+    } catch(e) { return false; }
+  }
+
+  function resetAll() {
+    Object.keys(KEYS).forEach(function(k) {
+      localStorage.removeItem(KEYS[k]);
+    });
+  }
+
+  return {
+    uid: uid,
+    getBusiness: getBusiness,
+    saveBusiness: saveBusiness,
+    getCanvas: getCanvas,
+    saveCanvas: saveCanvas,
+    addCanvasItem: addCanvasItem,
+    updateCanvasItem: updateCanvasItem,
+    removeCanvasItem: removeCanvasItem,
+    getHypotheses: getHypotheses,
+    saveHypotheses: saveHypotheses,
+    addHypothesis: addHypothesis,
+    updateHypothesis: updateHypothesis,
+    removeHypothesis: removeHypothesis,
+    addActual: addActual,
+    isWizardComplete: isWizardComplete,
+    setWizardComplete: setWizardComplete,
+    getTheme: getTheme,
+    saveTheme: saveTheme,
+    getTerminology: getTerminology,
+    saveTerminology: saveTerminology,
+    getToolPrefs: getToolPrefs,
+    saveToolPrefs: saveToolPrefs,
+    getPromptState: getPromptState,
+    savePromptState: savePromptState,
+    completePrompt: completePrompt,
+    dismissPrompt: dismissPrompt,
+    getSimConfig: getSimConfig,
+    saveSimConfig: saveSimConfig,
+    getSimResults: getSimResults,
+    saveSimResults: saveSimResults,
+    getOnboardingData: getOnboardingData,
+    saveOnboardingData: saveOnboardingData,
+    clearOnboardingData: clearOnboardingData,
+    exportAll: exportAll,
+    importAll: importAll,
+    resetAll: resetAll
+  };
+})();

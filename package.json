@@ -1,14 +1,10 @@
 {
   "name": "bmt",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Business Model Tracker",
+  "description": "BMT — persona-adaptive business cockpit for SMBs. Keep doing what you do best.",
   "scripts": {
-    "test": "jest --verbose",
-    "test:ci": "jest --ci --coverage"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0"
+    "start": "python3 -m http.server 8000",
+    "test": "echo 'v2 has no tests yet — v1 suite is in archive/v1/tests/' && exit 0"
   }
 }
