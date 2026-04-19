@@ -1,0 +1,1917 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Project BMT — User Flow Wireframes</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* BMT wireframes — lo-fi sketchy */
+:root {
+  --paper: oklch(0.97 0.01 80);
+  --paper-2: oklch(0.94 0.012 80);
+  --ink: oklch(0.22 0.01 80);
+  --ink-soft: oklch(0.45 0.01 80);
+  --ink-faint: oklch(0.75 0.01 80);
+  --accent: oklch(0.72 0.14 55);
+  --accent-soft: oklch(0.88 0.08 55);
+  --rule: oklch(0.78 0.01 80);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Kalam', 'Caveat', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+body {
+  background-image:
+    radial-gradient(oklch(0.86 0.01 80) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+
+.hand {
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+}
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+/* Sketchy borders — use multiple box-shadows + slight rotation */
+.sketch {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px 14px 11px 13px / 12px 10px 14px 11px;
+  background: var(--paper);
+  position: relative;
+}
+.sketch.dashed {
+  border-style: dashed;
+}
+.sketch.thick {
+  border-width: 2.5px;
+}
+.sketch.soft {
+  border-color: var(--ink-faint);
+}
+.sketch.accent {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Striped placeholder for imagery */
+.ph {
+  border: 1.5px solid var(--ink);
+  border-radius: 8px 10px 9px 11px / 10px 9px 11px 8px;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 8px,
+      oklch(0.88 0.01 80) 8px 10px
+    );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  padding: 8px;
+  min-height: 60px;
+}
+
+/* Highlighter underline */
+.hl {
+  background: linear-gradient(transparent 60%, var(--accent-soft) 60% 92%, transparent 92%);
+  padding: 0 2px;
+}
+
+/* Scribble arrow */
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-soft);
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+}
+
+/* Canvas layout */
+.canvas {
+  padding: 64px 48px 120px;
+  min-width: max-content;
+}
+.canvas-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 100vh;
+}
+
+.stages {
+  display: flex;
+  gap: 56px;
+  align-items: flex-start;
+}
+
+.stage {
+  flex: 0 0 auto;
+  width: 520px;
+  position: relative;
+}
+.stage.wide { width: 900px; }
+.stage.xwide { width: 1180px; }
+
+.stage-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stage-num {
+  font-family: 'Caveat', cursive;
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 0.9;
+}
+.stage-title {
+  font-family: 'Caveat', cursive;
+  font-size: 34px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+.stage-sub {
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 420px;
+  margin-bottom: 18px;
+}
+
+/* Between-stage arrow */
+.flow-arrow {
+  align-self: center;
+  margin-top: 180px;
+  font-family: 'Caveat', cursive;
+  font-size: 38px;
+  color: var(--ink-faint);
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.flow-arrow .mono { font-size: 10px; }
+
+/* Browser frame */
+.browser {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 3px 4px 0 var(--ink-faint);
+}
+.browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1.5px dashed var(--ink-faint);
+  background: var(--paper-2);
+}
+.browser-bar .dot {
+  width: 10px; height: 10px;
+  border: 1.2px solid var(--ink);
+  border-radius: 50%;
+}
+.browser-bar .url {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-faint);
+  border-radius: 6px;
+  padding: 3px 10px;
+  background: var(--paper);
+}
+.browser-body {
+  padding: 20px;
+  min-height: 340px;
+}
+
+/* Annotation callouts */
+.note {
+  position: absolute;
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  color: var(--accent);
+  max-width: 180px;
+  line-height: 1.1;
+}
+.note::before {
+  content: "↳";
+  margin-right: 4px;
+}
+.note.left::before { content: "↰"; }
+
+.tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border: 1.2px solid var(--ink);
+  border-radius: 20px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.tag.accent {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.row { display: flex; gap: 12px; }
+.col { display: flex; flex-direction: column; gap: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px 10px 9px 11px / 10px 9px 11px 8px;
+  background: var(--paper);
+  font-family: 'Kalam', sans-serif;
+  font-size: 13px;
+  box-shadow: 2px 2px 0 var(--ink-faint);
+}
+.btn.primary {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 2px 2px 0 var(--accent);
+}
+.btn.accent {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: 2px 2px 0 var(--accent);
+}
+
+.field {
+  border: 1.5px solid var(--ink);
+  border-radius: 8px 10px 9px 11px;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+
+.divider {
+  height: 1.5px;
+  border: none;
+  border-top: 1.5px dashed var(--ink-faint);
+  margin: 14px 0;
+}
+
+/* Industry tabs */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 6px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 20px 18px 22px 20px;
+  background: var(--paper);
+  font-family: 'Kalam', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+.tab.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Tweaks panel */
+#tweaks-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 260px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 4px 6px 0 var(--ink-faint);
+  z-index: 1000;
+  display: none;
+  font-size: 13px;
+}
+#tweaks-panel.open { display: block; }
+#tweaks-panel h4 {
+  margin: 0 0 10px;
+  font-family: 'Caveat', cursive;
+  font-size: 22px;
+}
+#tweaks-panel label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+#tweaks-panel select, #tweaks-panel input[type=range] {
+  font-family: inherit;
+  font-size: 12px;
+}
+
+/* Minimap */
+.minimap {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 24px;
+  padding: 6px 10px;
+  box-shadow: 2px 2px 0 var(--ink-faint);
+  z-index: 500;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.minimap a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 14px;
+}
+.minimap a:hover { background: var(--accent-soft); color: var(--ink); }
+
+/* Title block */
+.title-block {
+  position: relative;
+  margin-bottom: 48px;
+  max-width: 900px;
+}
+.title-block h1 {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 64px;
+  margin: 0 0 6px;
+  line-height: 0.95;
+}
+.title-block p {
+  margin: 0;
+  color: var(--ink-soft);
+  max-width: 640px;
+}
+
+/* Sticky yellow note */
+.sticky {
+  background: var(--accent-soft);
+  border: 1.5px solid var(--accent);
+  border-radius: 4px 8px 4px 8px;
+  padding: 10px 12px;
+  font-family: 'Caveat', cursive;
+  font-size: 17px;
+  color: var(--ink);
+  transform: rotate(-1.2deg);
+  box-shadow: 2px 3px 0 oklch(0.82 0.08 55);
+  max-width: 260px;
+}
+
+/* Progress dots (pizza tracker vibe) */
+.tracker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 14px;
+}
+.tracker .node {
+  width: 22px; height: 22px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  background: var(--paper);
+}
+.tracker .node.done { background: var(--ink); color: var(--paper); }
+.tracker .node.active { background: var(--accent-soft); border-color: var(--accent); }
+.tracker .line {
+  flex: 1;
+  height: 1.5px;
+  border-top: 1.5px dashed var(--ink-faint);
+}
+
+/* KPI card */
+.kpi {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px 12px 10px 14px;
+  padding: 12px;
+  background: var(--paper);
+}
+.kpi .label { font-size: 11px; color: var(--ink-soft); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em;}
+.kpi .val { font-family: 'Caveat', cursive; font-size: 32px; line-height: 1; margin-top: 4px; }
+.kpi .delta { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+
+/* Chart placeholder */
+.chart {
+  height: 70px;
+  background:
+    linear-gradient(to top, transparent 0%, transparent 100%),
+    repeating-linear-gradient(to right, var(--ink-faint) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(to top, var(--ink-faint) 0 1px, transparent 1px 20px);
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: 6px;
+  position: relative;
+  margin-top: 6px;
+}
+.chart svg { width: 100%; height: 100%; }
+
+/* Nudge card */
+.nudge {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 10px 14px 10px 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  position: relative;
+}
+.nudge .mono { color: var(--ink); opacity: 0.7; }
+
+/* Side panel (COO) */
+.coo-panel {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--paper-2);
+  font-size: 12px;
+}
+
+/* module card */
+.module {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--paper);
+}
+.module h5 {
+  margin: 0 0 6px;
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* scenario tile */
+.scenario {
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--paper);
+  position: relative;
+}
+.scenario.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.scenario h4 {
+  margin: 0;
+  font-family: 'Caveat', cursive;
+  font-size: 26px;
+}
+
+/* ========== Personas ========== */
+.persona {
+  border: 1.5px solid var(--ink);
+  border-radius: 12px 14px 12px 16px;
+  padding: 14px;
+  background: var(--paper);
+  position: relative;
+}
+.persona-name { font-size: 26px; line-height: 1; margin: 8px 0 2px; }
+.persona-list { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink); line-height: 1.35;}
+.persona-list li { margin-bottom: 2px; }
+.jtbd-list { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.45;}
+.jtbd-list li { margin-bottom: 3px; }
+.avatar {
+  width: 56px; height: 56px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper-2);
+  position: relative;
+  box-shadow: 2px 3px 0 var(--ink-faint);
+}
+.avatar::before {
+  /* head */
+  content: "";
+  position: absolute; left: 50%; top: 26%;
+  transform: translateX(-50%);
+  width: 22px; height: 22px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+}
+.avatar::after {
+  /* shoulders */
+  content: "";
+  position: absolute; left: 50%; bottom: -6px;
+  transform: translateX(-50%);
+  width: 40px; height: 22px;
+  border: 1.5px solid var(--ink);
+  border-top: none;
+  border-radius: 50% 50% 0 0 / 90% 90% 0 0;
+  background: var(--paper);
+}
+.avatar-lina  { background: oklch(0.90 0.06 20); }
+.avatar-klaus { background: oklch(0.90 0.04 140); }
+.avatar-franka{ background: oklch(0.90 0.06 260); }
+.avatar-nadia { background: oklch(0.90 0.06 80); }
+
+/* Persona-tinted cockpit variants */
+.pcock {
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--paper);
+}
+.pcock h4 { margin: 0 0 6px; font-family: 'Caveat', cursive; font-size: 22px; }
+.pcock .pmood { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft);}
+
+.cockpit-lina   { background: oklch(0.97 0.02 20);  border-color: oklch(0.45 0.12 20); }
+.cockpit-klaus  { background: oklch(0.96 0.015 140);border-color: oklch(0.40 0.06 140); }
+.cockpit-franka { background: oklch(0.97 0.02 260); border-color: oklch(0.40 0.08 260); }
+.cockpit-nadia  { background: oklch(0.97 0.025 80); border-color: oklch(0.45 0.08 80); }
+
+/* Shock/event card */
+.shock {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 10px 14px 10px 14px;
+  padding: 10px 12px;
+  position: relative;
+}
+.shock .mono { color: var(--ink); }
+
+/* BML loop diagram */
+.bml {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.bml .step {
+  border: 1.5px dashed var(--ink);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--paper);
+  position: relative;
+}
+.bml .step .mono { font-size: 10px; }
+.bml .step .hand { font-size: 18px; }
+
+/* ========== Workbench scene (stage 2) ========== */
+.bench {
+  position: relative;
+  height: 380px;
+  border: 1.5px solid var(--ink);
+  border-radius: 14px 18px 14px 18px;
+  background:
+    /* soft wood tone */
+    linear-gradient(180deg, oklch(0.93 0.02 75), oklch(0.90 0.025 70));
+  overflow: hidden;
+  box-shadow: inset 0 0 0 4px var(--paper), 3px 4px 0 var(--ink-faint);
+}
+.bench-grain {
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 80px,
+      oklch(0.85 0.02 70 / 0.6) 80px 81px,
+      transparent 81px 180px,
+      oklch(0.85 0.02 70 / 0.4) 180px 181px
+    );
+  opacity: 0.5;
+  pointer-events: none;
+}
+.bench-center {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+  padding: 10px 16px;
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: 12px;
+  background: var(--paper);
+  z-index: 1;
+}
+.item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.item:hover { transform: translateY(-3px) rotate(-1deg); }
+.item-label {
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  color: var(--ink);
+  text-align: center;
+  background: var(--paper);
+  border: 1.2px solid var(--ink);
+  border-radius: 6px 10px 6px 10px;
+  padding: 4px 8px;
+  line-height: 1.1;
+  box-shadow: 1px 2px 0 var(--ink-faint);
+}
+.item-label .mono { display:block; font-size:9px; margin-top:2px; }
+
+.obj {
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  box-shadow: 2px 3px 0 oklch(0.75 0.02 70);
+}
+.obj-phone { width:44px; height:70px; border-radius:8px; background: var(--paper-2); position:relative; transform: rotate(-8deg); }
+.obj-phone::after { content:""; position:absolute; inset:6px 4px; border:1px dashed var(--ink-faint); border-radius:4px;}
+.obj-notebook { width:74px; height:54px; border-radius:2px 8px 8px 2px; background: var(--paper);
+  background-image: repeating-linear-gradient(transparent 0 7px, var(--ink-faint) 7px 8px);
+  transform: rotate(4deg);
+}
+.obj-notebook::before { content:""; position:absolute; width:4px; height:54px; background: var(--ink); }
+.obj-url { width:80px; height:22px; border-radius:14px; display:flex; align-items:center; padding:0 8px; font-family:'JetBrains Mono', monospace; font-size:9px; color:var(--ink-soft); transform: rotate(-3deg); }
+.obj-url::before { content:"https://…"; }
+.obj-receipt { width:44px; height:70px; border-radius:2px; background: var(--paper);
+  background-image: repeating-linear-gradient(var(--ink-faint) 0 1px, transparent 1px 7px);
+  transform: rotate(7deg);
+  clip-path: polygon(0 0, 100% 0, 100% 94%, 85% 100%, 70% 94%, 55% 100%, 40% 94%, 25% 100%, 10% 94%, 0 100%);
+}
+.obj-keys { width:52px; height:52px; border-radius:50%; background: transparent; border: 2.5px solid var(--ink); position:relative; transform: rotate(12deg);}
+.obj-keys::after { content:""; position:absolute; left:100%; top:45%; width:26px; height:8px; background: var(--ink); border-radius:2px; }
+.obj-card { width:64px; height:40px; border-radius:4px; background: var(--paper-2); transform: rotate(-6deg); }
+.obj-card::after { content:""; position:absolute; left:8px; top:10px; right:30px; height:3px; background: var(--ink); box-shadow: 0 8px 0 var(--ink-faint), 0 14px 0 var(--ink-faint);}
+
+</style>
+</head>
+<body>
+
+<!-- Minimap nav -->
+<nav class="minimap" aria-label="stages">
+  <a href="#s1">01 Land</a>
+  <a href="#s2">02 Workbench</a>
+  <a href="#s3">03 Extrapolate</a>
+  <a href="#s4">04 Confirm</a>
+  <a href="#s5">05 Cockpit</a>
+  <a href="#s6">06 Connect</a>
+  <a href="#s7">07 Adaptive</a>
+  <a href="#s8">08 COO</a>
+  <a href="#s9">09 Scenarios</a>
+</nav>
+
+<div class="canvas-scroll">
+  <div class="canvas">
+
+    <!-- Title -->
+    <header class="title-block">
+      <div class="mono">Project BMT · User flow wireframes · v0.1</div>
+      <h1>Keep doing what you do best.<br/>We'll <span class="hl">run the rest</span>.</h1>
+      <p>For operators who got into this because they love the craft — not the spreadsheets. Lo-fi sketch of the end-to-end journey: land → visual workbench onboarding → AI extrapolation → adaptive cockpit → an always-on "COO" surfacing insights and scenarios. Scroll right →</p>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <span class="tag">desktop web</span>
+        <span class="tag">lo-fi / structure only</span>
+        <span class="tag accent">ambient COO</span>
+        <span class="tag">persona-adaptive</span>
+      </div>
+    </header>
+
+    <!-- PERSONAS + JTBD -->
+    <section id="personas" data-screen-label="00 Personas + JTBD" style="margin-bottom:48px; max-width:1400px;">
+      <div class="mono">section · who we're building for</div>
+      <h2 class="hand" style="font-size:44px; margin:4px 0 6px; font-weight:700;">Four operators. One cockpit that dresses differently.</h2>
+      <p style="max-width:760px; color:var(--ink-soft); margin:0 0 20px;">
+        BMT doesn't serve "SMBs" — it serves <em>people</em>, whose relationship with admin work ranges from mildly annoyed to genuinely allergic. The cockpit should look and feel different for each. Below: four anchor personas, their jobs-to-be-done, and the <span class="hl">secret goal</span> — quietly teaching every operator to think like a lean startup.
+      </p>
+
+      <div class="grid4" style="gap:14px;">
+        <!-- Lina -->
+        <div class="persona">
+          <div class="avatar avatar-lina"></div>
+          <div class="hand persona-name">Lina · 26</div>
+          <div class="mono">hairdresser · Berlin · 2-chair salon</div>
+          <ul class="persona-list">
+            <li>Lives on Instagram · posts reels daily</li>
+            <li>Has SumUp · ignores the dashboard</li>
+            <li>Friend does her taxes twice a year</li>
+            <li>"Numbers stress me out, give me clients"</li>
+          </ul>
+          <div class="mono" style="margin-top:6px;">what she'd love:</div>
+          <div style="font-size:13px;">"Tell me who to text back today, and which reel worked."</div>
+        </div>
+
+        <!-- Klaus -->
+        <div class="persona">
+          <div class="avatar avatar-klaus"></div>
+          <div class="hand persona-name">Klaus · 51</div>
+          <div class="mono">plumber · 12 staff · 4 vans · Rhineland</div>
+          <ul class="persona-list">
+            <li>Prefers a real keyboard · not a mobile guy</li>
+            <li>Does dispatch &amp; admin all day, hates it</li>
+            <li>Happiest on a construction site, in overalls</li>
+            <li>Inherited shop from dad · deep pride</li>
+          </ul>
+          <div class="mono" style="margin-top:6px;">what he'd love:</div>
+          <div style="font-size:13px;">"Tell me where the 4 vans should be tomorrow, auto-answer the dumb emails."</div>
+        </div>
+
+        <!-- Franka -->
+        <div class="persona">
+          <div class="avatar avatar-franka"></div>
+          <div class="hand persona-name">Franka · 43</div>
+          <div class="mono">marketing agency · 2 freelancers · Hamburg</div>
+          <ul class="persona-list">
+            <li>Digitally native · tries every new tool</li>
+            <li>Bored by timesheets, invoicing, VAT</li>
+            <li>Great at selling the work, bad at scoping it</li>
+            <li>Wants to stay small &amp; sharp</li>
+          </ul>
+          <div class="mono" style="margin-top:6px;">what she'd love:</div>
+          <div style="font-size:13px;">"Draft the proposal, chase the invoice, let me focus on the creative."</div>
+        </div>
+
+        <!-- Nadia -->
+        <div class="persona">
+          <div class="avatar avatar-nadia"></div>
+          <div class="hand persona-name">Nadia · 38</div>
+          <div class="mono">café · 6 staff · 2 kids · Leipzig</div>
+          <ul class="persona-list">
+            <li>In the shop 11h/day · kids after that</li>
+            <li>Thin margins · every pastry counts</li>
+            <li>Suppliers, shifts, health inspector</li>
+            <li>No spare cognitive bandwidth, ever</li>
+          </ul>
+          <div class="mono" style="margin-top:6px;">what she'd love:</div>
+          <div style="font-size:13px;">"One glance at the till. One nudge per day. That's it."</div>
+        </div>
+      </div>
+
+      <!-- JTBD grid -->
+      <div style="margin-top:28px;">
+        <div class="mono">jobs to be done · the same 3 jobs, very different expressions</div>
+        <div class="grid3" style="gap:14px; margin-top:8px;">
+          <div class="sketch" style="padding:12px 14px;">
+            <div class="hand" style="font-size:22px;">🟢 Onboard me</div>
+            <div class="mono">the first 10 minutes</div>
+            <ul class="jtbd-list">
+              <li><strong>Lina:</strong> "skip the forms, I'll show you my insta"</li>
+              <li><strong>Klaus:</strong> "my son will set it up with me once"</li>
+              <li><strong>Franka:</strong> "I'll paste 3 URLs, done"</li>
+              <li><strong>Nadia:</strong> "I have 4 minutes between rushes"</li>
+            </ul>
+          </div>
+          <div class="sketch" style="padding:12px 14px;">
+            <div class="hand" style="font-size:22px;">🟡 Run me</div>
+            <div class="mono">the daily grind — automated</div>
+            <ul class="jtbd-list">
+              <li><strong>Lina:</strong> client reminders, reel ideas, rebookings</li>
+              <li><strong>Klaus:</strong> dispatch board, quote templates, invoices</li>
+              <li><strong>Franka:</strong> proposals, timesheets → invoices, VAT</li>
+              <li><strong>Nadia:</strong> shift fills, waste tracking, supplier orders</li>
+            </ul>
+          </div>
+          <div class="sketch" style="padding:12px 14px;">
+            <div class="hand" style="font-size:22px;">🔴 React with me</div>
+            <div class="mono">when the world changes</div>
+            <ul class="jtbd-list">
+              <li>RFP lands → draft a proposal overnight</li>
+              <li>Rent +22% → 3 paths to offset it</li>
+              <li>Key employee retires → recruiting + knowledge plan</li>
+              <li>Health inspector visit · supplier folds · flu season</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secret goal -->
+      <div class="sticky" style="margin-top:24px; transform:rotate(-0.6deg); max-width:640px;">
+        <strong>Secret product goal:</strong> every nudge, every scenario, every "why" is structured as <span class="hl">build → measure → learn</span>. Over 12 months, operators unknowingly internalize the lean-startup loop. They get more deliberate about their business — without ever reading a book about it.
+      </div>
+    </section>
+
+    <hr style="border:none; border-top:1.5px dashed var(--ink-faint); margin:0 0 40px;"/>
+
+    <div class="stages" id="flow">
+
+      <!-- STAGE 1 -->
+      <section class="stage xwide" id="s1" data-screen-label="01 Landing + Trust">
+        <div class="stage-head">
+          <div class="stage-num">01</div>
+          <div class="stage-title">Land, then prove it's really you</div>
+        </div>
+        <div class="stage-sub">No Google/Apple. Phone-number sign-in only. Your business data — bank, bookings, customers — deserves a front door sturdier than a 20-year-old email login. Every trust step is explained in plain words.</div>
+
+        <div class="grid3" style="gap:16px; align-items:start;">
+
+          <!-- 1a: Landing -->
+          <div>
+            <div class="mono" style="margin-bottom:6px;">1a · landing</div>
+            <div class="browser">
+              <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app</div></div>
+              <div class="browser-body" style="min-height:340px;">
+                <div style="text-align:center; padding:14px 0 18px;">
+                  <div class="hand" style="font-size:28px; line-height:1.0;">Keep doing what you<br/>do <span class="hl">best</span>.</div>
+                  <div class="hand" style="font-size:18px; color:var(--ink-soft); margin-top:6px;">We'll run the rest.</div>
+                </div>
+                <div class="col" style="gap:8px; max-width:280px; margin:0 auto;">
+                  <div class="mono" style="text-align:center;">your phone number</div>
+                  <div class="field" style="text-align:center;">+49 · · · · · · · · · ·</div>
+                  <span class="btn primary" style="text-align:center;">Continue →</span>
+                </div>
+                <hr class="divider"/>
+                <div class="mono" style="text-align:center;">no passwords · no google · no apple</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1b: Why phone -->
+          <div>
+            <div class="mono" style="margin-bottom:6px;">1b · 6-digit code</div>
+            <div class="browser">
+              <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/verify</div></div>
+              <div class="browser-body" style="min-height:340px;">
+                <div class="hand" style="font-size:22px;">We just texted you a code.</div>
+                <div class="mono" style="margin:4px 0 14px;">to +49 · · · 42 · · · · · <span style="color:var(--accent);">· change number</span></div>
+                <div class="row" style="gap:6px; justify-content:center; margin:8px 0;">
+                  <div class="field" style="width:34px; text-align:center;">4</div>
+                  <div class="field" style="width:34px; text-align:center;">2</div>
+                  <div class="field" style="width:34px; text-align:center;">8</div>
+                  <div class="field" style="width:34px; text-align:center;">_</div>
+                  <div class="field" style="width:34px; text-align:center;">_</div>
+                  <div class="field" style="width:34px; text-align:center;">_</div>
+                </div>
+                <div class="mono" style="text-align:center;">didn't get it? <span style="color:var(--accent);">resend · call me instead</span></div>
+                <hr class="divider"/>
+                <div class="sticky" style="transform:rotate(-0.8deg); max-width:100%;">
+                  <strong>Why the text?</strong> &nbsp;It means even if someone guessed your password, they'd also need your phone. That's called <span class="hl">2-factor</span>. We require it — your money stuff is worth it.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1c: 2FA setup / backup -->
+          <div>
+            <div class="mono" style="margin-bottom:6px;">1c · backup + trust receipt</div>
+            <div class="browser">
+              <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/trust</div></div>
+              <div class="browser-body" style="min-height:340px;">
+                <div class="hand" style="font-size:22px;">You're in. One small thing.</div>
+                <div style="margin:6px 0 10px;">If you lose your phone, how should we reach you?</div>
+                <div class="col" style="gap:6px;">
+                  <div class="sketch" style="padding:8px 10px;">
+                    <div class="mono">pick one (recommended)</div>
+                    <div>◉ &nbsp;A second phone number</div>
+                    <div style="opacity:0.7;">○ &nbsp;A printed backup code</div>
+                    <div style="opacity:0.7;">○ &nbsp;A trusted person (partner, accountant)</div>
+                  </div>
+                </div>
+                <hr class="divider"/>
+                <div class="mono" style="margin-bottom:4px;">trust receipt</div>
+                <div class="col" style="gap:4px; font-size:12px;">
+                  <div>✓ &nbsp;Your data never trains public AI</div>
+                  <div>✓ &nbsp;Leave anytime · download all of it</div>
+                  <div>✓ &nbsp;We'll email you when anything sensitive happens</div>
+                </div>
+                <div style="margin-top:10px; text-align:right;">
+                  <span class="btn primary">Take me to my workbench →</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:16px; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span class="tag accent">phone-first</span>
+          <span class="tag">no OAuth providers</span>
+          <span class="tag">SMS · or voice call fallback</span>
+          <span class="tag">2FA mandatory &amp; explained</span>
+          <span class="tag">any email works (even aol.com)</span>
+        </div>
+
+        <div class="sticky" style="margin-top:18px; transform:rotate(-0.5deg);">
+          <strong>Design rule:</strong> assume the user's email is <span class="hl">dad_schmidt@aol.com</span> set up in 1998. Phone number is the one identity they actually trust and control today.
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">signed in</div></div>
+
+      <!-- STAGE 2 -->
+      <section class="stage wide" id="s2" data-screen-label="02 Workbench">
+        <div class="stage-head">
+          <div class="stage-num">02</div>
+          <div class="stage-title">The workbench</div>
+        </div>
+        <div class="stage-sub">No form, no options. A single visual scene — the operator's workbench — with ambient drop zones. Tap anything to feed the AI more context. Nothing is required; everything helps.</div>
+
+        <div class="tracker">
+          <div class="node done">✓</div><div class="line"></div>
+          <div class="node active">2</div><div class="line"></div>
+          <div class="node">3</div><div class="line"></div>
+          <div class="node">4</div><div class="line"></div>
+          <div class="node">5</div>
+        </div>
+
+        <div class="browser">
+          <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/workbench</div></div>
+          <div class="browser-body" style="padding:20px;">
+            <div class="row" style="justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+              <div class="hand" style="font-size:24px;">Drop anything about your business onto the bench.</div>
+              <div class="mono">the more you drop, the sharper we get</div>
+            </div>
+
+            <!-- The bench -->
+            <div class="bench">
+              <!-- wood plank lines -->
+              <div class="bench-grain"></div>
+
+              <!-- Drop zones as scattered objects -->
+              <div class="item it-phone" style="left:6%; top:18%;">
+                <div class="obj obj-phone"></div>
+                <div class="item-label">↑ drop photos<br/><span class="mono">shop · menu · staff</span></div>
+              </div>
+
+              <div class="item it-notebook" style="left:26%; top:54%;">
+                <div class="obj obj-notebook"></div>
+                <div class="item-label">↑ just say it<br/><span class="mono">type or talk, 1 sentence</span></div>
+              </div>
+
+              <div class="item it-url" style="left:48%; top:16%;">
+                <div class="obj obj-url"></div>
+                <div class="item-label">↑ paste a link<br/><span class="mono">site · insta · google maps</span></div>
+              </div>
+
+              <div class="item it-receipt" style="left:68%; top:58%;">
+                <div class="obj obj-receipt"></div>
+                <div class="item-label">↑ drop a receipt<br/><span class="mono">or invoice, bill, POS export</span></div>
+              </div>
+
+              <div class="item it-keys" style="left:84%; top:22%;">
+                <div class="obj obj-keys"></div>
+                <div class="item-label">↑ connect a tool<br/><span class="mono">stripe · calendar · bank</span></div>
+              </div>
+
+              <div class="item it-card" style="left:12%; top:72%;">
+                <div class="obj obj-card"></div>
+                <div class="item-label">↑ business card<br/><span class="mono">snap a photo</span></div>
+              </div>
+
+              <!-- central prompt -->
+              <div class="bench-center">
+                <div class="hand" style="font-size:22px;">nothing is required</div>
+                <div class="mono">we start the moment you drop anything</div>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:14px; justify-content:space-between; align-items:center;">
+              <div class="mono">0 of ∞ things on the bench · skip whenever</div>
+              <span class="btn primary">I'm done for now →</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="note" style="top:230px; right:-80px;">No form. No choice architecture. A scene they explore.</div>
+        <div class="sticky" style="position:absolute; left:-40px; bottom:-20px;">The bench never "finishes" — it stays as their permanent inbox for context.</div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">~15s</div></div>
+
+      <!-- STAGE 3 -->
+      <section class="stage" id="s3" data-screen-label="03 Extrapolate">
+        <div class="stage-head">
+          <div class="stage-num">03</div>
+          <div class="stage-title">AI extrapolates</div>
+        </div>
+        <div class="stage-sub">"Pizza tracker" moment — user watches their business model get built in real time.</div>
+
+        <div class="tracker">
+          <div class="node done">✓</div><div class="line"></div>
+          <div class="node done">✓</div><div class="line"></div>
+          <div class="node active">3</div><div class="line"></div>
+          <div class="node">4</div><div class="line"></div>
+          <div class="node">5</div>
+        </div>
+
+        <div class="browser">
+          <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/analyzing</div></div>
+          <div class="browser-body">
+            <div class="hand" style="font-size:24px; margin-bottom:4px;">Reading your shop…</div>
+            <div class="mono">this takes ~15 seconds</div>
+
+            <div class="col" style="gap:8px; margin-top:16px;">
+              <div class="sketch" style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>🔎 &nbsp;Scanning website text &amp; images</span>
+                <span class="mono">done ✓</span>
+              </div>
+              <div class="sketch" style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>📍 &nbsp;Locating you &amp; neighborhood</span>
+                <span class="mono">done ✓</span>
+              </div>
+              <div class="sketch accent" style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>🧠 &nbsp;Classifying business type</span>
+                <span class="mono">running…</span>
+              </div>
+              <div class="sketch soft" style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center; opacity:0.6;">
+                <span>📊 &nbsp;Estimating model parameters</span>
+                <span class="mono">queued</span>
+              </div>
+              <div class="sketch soft" style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center; opacity:0.6;">
+                <span>🎨 &nbsp;Tuning cockpit look &amp; feel</span>
+                <span class="mono">queued</span>
+              </div>
+            </div>
+
+            <hr class="divider"/>
+            <div class="mono">live narration</div>
+            <div class="hand" style="font-size:18px; color:var(--ink-soft);">
+              "Looks like a hair salon in Berlin. Two chairs, by-appointment. I'll bring in booking &amp; payment views first…"
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky" style="margin-top:18px;">Narration IS the trust. User can interrupt any assumption.</div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">review</div></div>
+
+      <!-- STAGE 4 -->
+      <section class="stage" id="s4" data-screen-label="04 Confirm">
+        <div class="stage-head">
+          <div class="stage-num">04</div>
+          <div class="stage-title">Confirm & correct</div>
+        </div>
+        <div class="stage-sub">User scans a one-page "receipt" of what AI thinks. Tap to edit anything. This is the main trust moment.</div>
+
+        <div class="tracker">
+          <div class="node done">✓</div><div class="line"></div>
+          <div class="node done">✓</div><div class="line"></div>
+          <div class="node done">✓</div><div class="line"></div>
+          <div class="node active">4</div><div class="line"></div>
+          <div class="node">5</div>
+        </div>
+
+        <div class="browser">
+          <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/confirm</div></div>
+          <div class="browser-body">
+            <div class="row" style="justify-content:space-between; align-items:baseline;">
+              <div class="hand" style="font-size:24px;">Does this look right?</div>
+              <span class="mono">tap any line to fix</span>
+            </div>
+
+            <div class="col" style="gap:8px; margin-top:12px;">
+              <div class="sketch" style="padding:10px 12px;">
+                <div class="mono">business</div>
+                <div>Hair salon · 2 stylists · <span class="hl">by-appointment</span></div>
+                <div class="mono" style="margin-top:4px; color:var(--accent);">↳ why: site says "termine" + photo of 2 chairs</div>
+              </div>
+              <div class="sketch" style="padding:10px 12px;">
+                <div class="mono">location</div>
+                <div>Berlin, Kreuzberg · foot traffic area</div>
+              </div>
+              <div class="sketch" style="padding:10px 12px;">
+                <div class="mono">price tier</div>
+                <div>Mid-market · €40-70 cut range</div>
+              </div>
+              <div class="sketch" style="padding:10px 12px;">
+                <div class="mono">customers</div>
+                <div>~60% local regulars · repeat every 5-6 wk</div>
+                <div class="mono" style="margin-top:4px; color:var(--accent);">↳ estimated — connect bookings to confirm</div>
+              </div>
+              <div class="sketch dashed" style="padding:10px 12px; background:var(--paper-2);">
+                <div class="mono">I don't know yet</div>
+                <div style="color:var(--ink-soft);">Revenue · staff costs · ad spend</div>
+                <div class="mono">→ connect bank or skip for now</div>
+              </div>
+            </div>
+
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center;">
+              <span class="btn">Fix something</span>
+              <span class="btn primary">Looks right → open cockpit</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="note left" style="top:140px; left:-140px; text-align:right;">Every AI guess has a "why". Always.</div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">enter</div></div>
+
+      <!-- STAGE 5 -->
+      <section class="stage wide" id="s5" data-screen-label="05 Cockpit fills in">
+        <div class="stage-head">
+          <div class="stage-num">05</div>
+          <div class="stage-title">Cockpit materializes</div>
+        </div>
+        <div class="stage-sub">Dashboard loads in waves. Modules start as ghosts, solidify as data arrives. User can keep using it while it fills.</div>
+
+        <div class="browser">
+          <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/cockpit</div></div>
+          <div class="browser-body" style="padding:14px;">
+
+            <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <div class="hand" style="font-size:22px;">Good morning, Lina ✂️</div>
+              <div class="mono">cockpit 42% complete →</div>
+            </div>
+
+            <div class="grid3">
+              <!-- filled -->
+              <div class="module">
+                <h5>Today's bookings <span class="tag">live</span></h5>
+                <div class="hand" style="font-size:28px;">7 / 9</div>
+                <div class="mono">2 slots open · 14:00, 17:30</div>
+              </div>
+              <!-- filling -->
+              <div class="module" style="opacity:0.75;">
+                <h5>Cashflow <span class="tag">estimating…</span></h5>
+                <div class="ph" style="height:50px;">connect bank →</div>
+              </div>
+              <!-- ghost -->
+              <div class="module sketch dashed" style="opacity:0.55;">
+                <h5>Reviews</h5>
+                <div class="mono">waiting for Google link</div>
+              </div>
+
+              <div class="module">
+                <h5>This week</h5>
+                <div class="chart"></div>
+                <div class="mono" style="margin-top:4px;">bookings · last 7 days</div>
+              </div>
+              <div class="module">
+                <h5>Regulars due</h5>
+                <div class="hand" style="font-size:22px;">12 clients</div>
+                <div class="mono">haven't booked in 6+ wk</div>
+              </div>
+              <div class="module sketch dashed" style="opacity:0.55;">
+                <h5>Staff schedule</h5>
+                <div class="mono">add staff →</div>
+              </div>
+            </div>
+
+            <hr class="divider"/>
+            <div class="row" style="justify-content:space-between;">
+              <div class="mono">ghosts = not connected yet · keep clicking to wire up</div>
+              <span class="btn">+ add a data source</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="sticky" style="position:absolute; right:-40px; top:130px;">Progressive disclosure replaces a 12-step setup wizard.</div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">enrich</div></div>
+
+      <!-- STAGE 6 — CONNECTIONS -->
+      <section class="stage xwide" id="s6" data-screen-label="06 Connections">
+        <div class="stage-head">
+          <div class="stage-num">06</div>
+          <div class="stage-title">Make the cockpit smarter</div>
+        </div>
+        <div class="stage-sub">Every ghost module is a hint: connect a tool, get a sharper answer. For operators without those tools yet, we suggest one. <strong>We pass data through — never retain it.</strong> The goal: be the place Stripe, Gmail and Salesforce <em>want</em> to be embedded in.</div>
+
+        <div class="browser">
+          <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/connect</div></div>
+          <div class="browser-body" style="padding:16px; display:grid; grid-template-columns: 1.2fr 1fr; gap:18px;">
+
+            <!-- LEFT: connection tiles, grouped by payoff -->
+            <div>
+              <div class="hand" style="font-size:22px; margin-bottom:4px;">What would help your cockpit most?</div>
+              <div class="mono" style="margin-bottom:10px;">sorted by "how much sharper you'll get" · everything is optional</div>
+
+              <!-- PAYMENTS -->
+              <div class="mono" style="margin-top:6px;">payments · unlocks cashflow, true revenue, break-even</div>
+              <div class="grid2" style="margin-top:4px;">
+                <div class="sketch" style="padding:10px 12px;">
+                  <div class="row" style="justify-content:space-between;">
+                    <div class="hand" style="font-size:18px;">Connect Stripe</div>
+                    <span class="tag accent">+34% sharper</span>
+                  </div>
+                  <div class="mono" style="margin-top:2px;">read-only · passthrough · we keep nothing</div>
+                  <div class="row" style="gap:6px; margin-top:8px;"><span class="btn accent">Connect</span><span class="btn">Why this?</span></div>
+                </div>
+                <div class="sketch dashed" style="padding:10px 12px; background:var(--paper-2);">
+                  <div class="row" style="justify-content:space-between;">
+                    <div class="hand" style="font-size:18px;">No payment system yet?</div>
+                    <span class="tag">we suggest</span>
+                  </div>
+                  <div style="margin-top:2px; font-size:13px;">For a 2-chair salon, <span class="hl">SumUp</span> is the simplest start. €0/mo + 1.39% per card.</div>
+                  <div class="row" style="gap:6px; margin-top:8px;"><span class="btn">Set me up →</span><span class="btn">Compare 3</span></div>
+                </div>
+              </div>
+
+              <!-- BOOKINGS / CALENDAR -->
+              <div class="mono" style="margin-top:14px;">bookings &amp; calendar · unlocks regulars, capacity, no-shows</div>
+              <div class="grid2" style="margin-top:4px;">
+                <div class="sketch" style="padding:10px 12px;">
+                  <div class="row" style="justify-content:space-between;">
+                    <div class="hand" style="font-size:18px;">Google Calendar</div>
+                    <span class="tag accent">+22%</span>
+                  </div>
+                  <div class="mono" style="margin-top:2px;">scope: calendar events · read-only</div>
+                  <div class="row" style="gap:6px; margin-top:8px;"><span class="btn accent">Connect</span></div>
+                </div>
+                <div class="sketch" style="padding:10px 12px;">
+                  <div class="row" style="justify-content:space-between;">
+                    <div class="hand" style="font-size:18px;">Treatwell / Fresha</div>
+                    <span class="tag accent">+22%</span>
+                  </div>
+                  <div class="mono" style="margin-top:2px;">direct link · one-tap</div>
+                </div>
+              </div>
+
+              <!-- EMAIL -->
+              <div class="mono" style="margin-top:14px;">business inbox · unlocks invoices, leads, supplier chats</div>
+              <div class="grid2" style="margin-top:4px;">
+                <div class="sketch" style="padding:10px 12px;">
+                  <div class="row" style="justify-content:space-between;">
+                    <div class="hand" style="font-size:18px;">Gmail / Outlook</div>
+                    <span class="tag accent">+18%</span>
+                  </div>
+                  <div class="mono" style="margin-top:2px;">we only read invoices &amp; receipts · nothing else</div>
+                </div>
+                <div class="sketch dashed" style="padding:10px 12px; background:var(--paper-2);">
+                  <div class="hand" style="font-size:18px;">Your inbox is an old aol.com?</div>
+                  <div style="margin-top:2px; font-size:13px;">That's fine. Forward invoices to <span class="hl">bills@yours.bmt.app</span> and we'll catch them.</div>
+                </div>
+              </div>
+
+              <!-- BANK / ERP -->
+              <div class="mono" style="margin-top:14px;">bank · accounting · erp · unlocks runway, tax, planning</div>
+              <div class="grid2" style="margin-top:4px;">
+                <div class="sketch" style="padding:10px 12px;">
+                  <div class="hand" style="font-size:18px;">Bank feed (PSD2)</div>
+                  <div class="mono" style="margin-top:2px;">read-only · EU-regulated</div>
+                </div>
+                <div class="sketch" style="padding:10px 12px;">
+                  <div class="hand" style="font-size:18px;">DATEV · Lexware · Xero</div>
+                  <div class="mono" style="margin-top:2px;">we never overwrite your books</div>
+                </div>
+              </div>
+
+              <div class="mono" style="margin-top:14px;">crm · reviews · socials · later</div>
+              <div class="row" style="gap:6px; margin-top:4px; flex-wrap:wrap;">
+                <span class="tag">Salesforce</span>
+                <span class="tag">HubSpot</span>
+                <span class="tag">Google Business</span>
+                <span class="tag">Instagram</span>
+                <span class="tag">WhatsApp Business</span>
+                <span class="tag">Shopify</span>
+              </div>
+            </div>
+
+            <!-- RIGHT: sharpness meter + trust panel -->
+            <aside>
+              <div class="sketch" style="padding:12px 14px;">
+                <div class="mono">cockpit sharpness</div>
+                <div class="hand" style="font-size:40px; line-height:1;">42 → 78%</div>
+                <div class="chart" style="margin-top:6px; height:40px;"></div>
+                <div class="mono" style="margin-top:4px;">each tile shows the sharpness bump before you connect</div>
+              </div>
+
+              <div class="sketch accent" style="padding:12px 14px; margin-top:10px;">
+                <div class="hand" style="font-size:20px;">How data flows</div>
+                <div class="col" style="gap:3px; font-size:12.5px; margin-top:4px;">
+                  <div>1 · Stripe / Gmail / bank sends us data</div>
+                  <div>2 · We compute insights <em>in-session</em></div>
+                  <div>3 · We <span class="hl">throw raw data away</span></div>
+                  <div>4 · Only the insight is kept (on your device)</div>
+                </div>
+                <div class="mono" style="margin-top:6px;">passthrough · never retained · never used to train</div>
+              </div>
+
+              <div class="coo-panel" style="margin-top:10px;">
+                <div class="mono">trust receipt</div>
+                <div class="col" style="gap:3px; font-size:12px; margin-top:4px;">
+                  <div>✓ each connection is revocable in 1 tap</div>
+                  <div>✓ you see every field we read, before we read it</div>
+                  <div>✓ we email you when any connection is used</div>
+                  <div>✓ export or wipe everything, any time</div>
+                </div>
+              </div>
+
+              <div class="sticky" style="margin-top:12px; transform:rotate(-0.8deg);">
+                <strong>Our bet:</strong> Stripe &amp; Gmail <em>want</em> to be embedded here — because we bring them users they'd never reach alone. No retention = safe to integrate.
+              </div>
+            </aside>
+
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px; gap:10px; flex-wrap:wrap;">
+          <span class="tag accent">passthrough, not retention</span>
+          <span class="tag">suggests a tool if you don't have one</span>
+          <span class="tag">sharpness-ranked</span>
+          <span class="tag">forward-to-inbox fallback</span>
+          <span class="tag">one-tap revoke</span>
+        </div>
+
+        <div class="sticky" style="margin-top:16px; transform:rotate(0.5deg);">
+          Same screen re-appears later as <span class="hl">nudges</span> in the cockpit — "connect your bank for a sharper cashflow view" — never a blocking modal.
+        </div>
+      </section>
+
+      <div class="flow-arrow">↓→<div class="mono">over time</div></div>
+
+      <!-- STAGE 7 — PERSONA-SPECIFIC COCKPITS -->
+      <section class="stage xwide" id="s7" data-screen-label="07 Adaptive cockpit">
+        <div class="stage-head">
+          <div class="stage-num">07</div>
+          <div class="stage-title">One cockpit, four people</div>
+        </div>
+        <div class="stage-sub">The cockpit reshapes around the <em>person</em>, not just the industry. Lina's is visual &amp; mobile-first. Klaus's is a desktop command-post with big rows. Franka's is quiet &amp; keyboard-driven. Nadia's is one glanceable screen. Same engine, four lives.</div>
+
+        <div class="tabs">
+          <button class="tab active" data-persona="lina">✂️ Lina</button>
+          <button class="tab" data-persona="klaus">🔧 Klaus</button>
+          <button class="tab" data-persona="franka">✏️ Franka</button>
+          <button class="tab" data-persona="nadia">☕ Nadia</button>
+        </div>
+
+        <!-- LINA -->
+        <div id="pv-lina" class="pvariant">
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app · lina · phone-first view</div></div>
+            <div class="browser-body cockpit-lina" style="padding:14px;">
+              <div class="row" style="justify-content:space-between;">
+                <div class="hand" style="font-size:22px;">Hey Lina 💇‍♀️ · Tuesday</div>
+                <div class="mono">warm · big type · insta-native</div>
+              </div>
+              <div class="grid3" style="margin-top:8px;">
+                <div class="module"><h5>Today's chair</h5><div class="hand" style="font-size:28px;">7 clients</div><div class="mono">2 slots: 14:00 · 17:30</div></div>
+                <div class="module"><h5>Ready to text 💬</h5><div class="hand" style="font-size:18px;">3 regulars overdue</div><div class="mono">one-tap voice note template</div></div>
+                <div class="module"><h5>Reels that worked</h5><div class="chart" style="height:40px;"></div><div class="mono">tues 18:00 posts = 2× saves</div></div>
+              </div>
+              <div class="nudge" style="margin-top:10px;">
+                <div class="mono">📣 ambient nudge · plain words</div>
+                <div class="hand" style="font-size:17px;">You made <span class="hl">€1,840 this week</span>. €280 more than last. Want me to put the extra aside for your tax friend?</div>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="gap:6px; margin-top:8px; flex-wrap:wrap;">
+            <span class="tag">no spreadsheets shown · ever</span>
+            <span class="tag">tax-speak hidden</span>
+            <span class="tag accent">primary surface: mobile</span>
+          </div>
+        </div>
+
+        <!-- KLAUS -->
+        <div id="pv-klaus" class="pvariant" style="display:none;">
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app · klaus · desktop command-post</div></div>
+            <div class="browser-body cockpit-klaus" style="padding:14px;">
+              <div class="row" style="justify-content:space-between;">
+                <div class="hand" style="font-size:22px;">Dispatch · Wed 06:40</div>
+                <div class="mono">green · big rows · keyboard shortcuts</div>
+              </div>
+              <!-- Dispatch board -->
+              <div class="sketch" style="padding:10px; margin-top:8px;">
+                <div class="mono">4 vans · 8 jobs today</div>
+                <div class="col" style="gap:4px; margin-top:6px; font-size:13px;">
+                  <div class="row" style="justify-content:space-between;"><span>🚐 Van 1 · Thomas</span><span class="mono">Köln-Süd · boiler · 08:00</span></div>
+                  <div class="row" style="justify-content:space-between;"><span>🚐 Van 2 · Ayşe</span><span class="mono">Ehrenfeld · leak · 08:30</span></div>
+                  <div class="row" style="justify-content:space-between;"><span>🚐 Van 3 · Paul</span><span class="mono">new-build site · all day</span></div>
+                  <div class="row" style="justify-content:space-between;"><span>🚐 Van 4 · free</span><span class="mono">→ reassign?</span></div>
+                </div>
+              </div>
+              <div class="grid3" style="margin-top:10px;">
+                <div class="module"><h5>Inbox</h5><div class="hand" style="font-size:22px;">14 emails</div><div class="mono">11 auto-drafted · review &amp; send</div></div>
+                <div class="module"><h5>Quotes out</h5><div class="hand" style="font-size:22px;">€18.4k</div><div class="mono">3 waiting · nudge today?</div></div>
+                <div class="module"><h5>Parts low</h5><div class="hand" style="font-size:18px;">copper pipe 22mm</div><div class="mono">auto-order from Würth?</div></div>
+              </div>
+              <div class="nudge" style="margin-top:10px;">
+                <div class="mono">⚡ dispatcher's helper</div>
+                <div style="font-size:14px;">Van 4 is free. The job at Dellbrück is 12 min from Paul's site — he could take it if you want him back by 16:00.</div>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="gap:6px; margin-top:8px; flex-wrap:wrap;">
+            <span class="tag">every screen has a keyboard shortcut</span>
+            <span class="tag">"press J to dispatch"</span>
+            <span class="tag accent">primary surface: desktop</span>
+            <span class="tag">son-setup mode for day 1</span>
+          </div>
+        </div>
+
+        <!-- FRANKA -->
+        <div id="pv-franka" class="pvariant" style="display:none;">
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app · franka · quiet mode</div></div>
+            <div class="browser-body cockpit-franka" style="padding:14px;">
+              <div class="row" style="justify-content:space-between;">
+                <div class="hand" style="font-size:22px;">Good morning Franka — 2 things.</div>
+                <div class="mono">slate · minimal · ⌘K everywhere</div>
+              </div>
+              <div class="col" style="gap:8px; margin-top:10px;">
+                <div class="module" style="padding:10px 14px;">
+                  <div class="mono">today · 1 of 2</div>
+                  <div class="hand" style="font-size:18px;">Send the Acme proposal (draft ready, 3 min review)</div>
+                </div>
+                <div class="module" style="padding:10px 14px;">
+                  <div class="mono">today · 2 of 2</div>
+                  <div class="hand" style="font-size:18px;">Approve Q2 invoice batch (€12.4k · 6 clients)</div>
+                </div>
+              </div>
+              <div class="grid3" style="margin-top:12px;">
+                <div class="kpi"><div class="label">billable this wk</div><div class="val">28h</div><div class="delta">of 32 target</div></div>
+                <div class="kpi"><div class="label">runway</div><div class="val">5.2mo</div><div class="delta">stable</div></div>
+                <div class="kpi"><div class="label">overdue</div><div class="val">€2.1k</div><div class="delta">chased today</div></div>
+              </div>
+              <div class="nudge" style="margin-top:10px;">
+                <div class="mono">💡 coach</div>
+                <div style="font-size:14px;">Your last 3 proposals were scoped 40% under final hours. Want me to add a "scoping buffer" to the Acme draft?</div>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="gap:6px; margin-top:8px; flex-wrap:wrap;">
+            <span class="tag">max 2-3 items on screen</span>
+            <span class="tag">drafts instead of forms</span>
+            <span class="tag accent">primary surface: desktop, keyboard</span>
+          </div>
+        </div>
+
+        <!-- NADIA -->
+        <div id="pv-nadia" class="pvariant" style="display:none;">
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app · nadia · one-glance mode</div></div>
+            <div class="browser-body cockpit-nadia" style="padding:14px;">
+              <div class="row" style="justify-content:space-between;">
+                <div class="hand" style="font-size:22px;">Café · right now · 11:42</div>
+                <div class="mono">cream · one-glance · no depth</div>
+              </div>
+              <div class="grid3" style="margin-top:10px;">
+                <div class="kpi" style="padding:14px;"><div class="label">till today</div><div class="val">€612</div><div class="delta">on pace</div></div>
+                <div class="kpi" style="padding:14px;"><div class="label">staff covered</div><div class="val">✓</div><div class="delta">no gaps this wk</div></div>
+                <div class="kpi" style="padding:14px;"><div class="label">1 nudge</div><div class="val">🥐</div><div class="delta">order croissants by 3pm</div></div>
+              </div>
+              <div class="sketch" style="padding:10px 14px; margin-top:10px;">
+                <div class="hand" style="font-size:20px;">Today's one thing:</div>
+                <div style="font-size:14px;">Approve the croissant order — Lena said we'll run out Sat.</div>
+                <div class="row" style="gap:6px; margin-top:6px;"><span class="btn accent">Approve</span><span class="btn">Ask Lena</span></div>
+              </div>
+              <div class="mono" style="margin-top:8px; text-align:center;">if nothing is urgent, this screen says "all good" · and that's it</div>
+            </div>
+          </div>
+          <div class="row" style="gap:6px; margin-top:8px; flex-wrap:wrap;">
+            <span class="tag">≤1 decision per day</span>
+            <span class="tag">"all good" is a valid screen</span>
+            <span class="tag accent">primary surface: tablet on counter</span>
+          </div>
+        </div>
+
+        <div class="sticky" style="margin-top:16px;">
+          Density, tone, even <em>what counts as the home screen</em> changes per person. The engine underneath is the same.
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">life happens</div></div>
+
+      <!-- STAGE 7.5 — SHOCKS / REACT WITH ME -->
+      <section class="stage xwide" id="s75" data-screen-label="07b React with me">
+        <div class="stage-head">
+          <div class="stage-num">07<span style="font-size:28px;">b</span></div>
+          <div class="stage-title">When the world shifts</div>
+        </div>
+        <div class="stage-sub">The third JTBD. Something outside lands — RFP, rent letter, a key employee retiring. The cockpit briefly transforms into a <em>situation room</em> with a structured plan.</div>
+
+        <div class="grid3" style="gap:14px;">
+          <!-- RFP -->
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">·/react/rfp</div></div>
+            <div class="browser-body" style="min-height:320px;">
+              <div class="shock"><div class="mono">📬 detected in inbox · 8 min ago</div><div class="hand" style="font-size:18px;">RFP from Acme — response due Fri</div></div>
+              <div class="hand" style="font-size:18px; margin-top:10px;">What I'll do if you say go:</div>
+              <ul style="font-size:13px; padding-left:18px; margin:4px 0;">
+                <li>Draft a proposal from your last 3 similar wins</li>
+                <li>Pull pricing &amp; scope based on their RFP</li>
+                <li>Block 2h Thursday morning for your review</li>
+              </ul>
+              <div class="row" style="gap:6px;"><span class="btn accent">Go</span><span class="btn">Decline for me</span></div>
+            </div>
+          </div>
+
+          <!-- Rent -->
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">·/react/rent</div></div>
+            <div class="browser-body" style="min-height:320px;">
+              <div class="shock"><div class="mono">🏠 letter scanned from photo</div><div class="hand" style="font-size:18px;">Landlord wants +22% from Oct.</div></div>
+              <div class="hand" style="font-size:18px; margin-top:10px;">3 paths to offset it:</div>
+              <div class="col" style="gap:6px; margin-top:4px;">
+                <div class="sketch" style="padding:8px 10px;"><strong>a</strong> · +8% price · lose ~4% regulars · net +€480/mo</div>
+                <div class="sketch" style="padding:8px 10px;"><strong>b</strong> · open Sun 11-16 · +€620/mo · costs staff</div>
+                <div class="sketch" style="padding:8px 10px;"><strong>c</strong> · negotiate &amp; move in 6mo · sandbox →</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Retirement -->
+          <div class="browser">
+            <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">·/react/staff</div></div>
+            <div class="browser-body" style="min-height:320px;">
+              <div class="shock"><div class="mono">👋 noticed in calendar</div><div class="hand" style="font-size:18px;">Thomas retiring in 5 months.</div></div>
+              <div class="hand" style="font-size:18px; margin-top:10px;">Plan I'd run:</div>
+              <ul style="font-size:13px; padding-left:18px; margin:4px 0;">
+                <li>Week 1-2 · post role, draft JD from his actual work</li>
+                <li>Week 3-8 · interviews, trial days</li>
+                <li>Month 3-5 · shadow &amp; handover · capture his tricks</li>
+              </ul>
+              <div class="row" style="gap:6px;"><span class="btn accent">Start the plan</span><span class="btn">Later</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px; gap:10px; flex-wrap:wrap;">
+          <span class="tag">inbox · calendar · photos feed the detector</span>
+          <span class="tag">always offers a "do nothing" path</span>
+          <span class="tag accent">user stays in charge</span>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">always on</div></div>
+
+      <!-- STAGE 8 -->
+      <section class="stage xwide" id="s8" data-screen-label="08 COO layer">
+        <div class="stage-head">
+          <div class="stage-num">08</div>
+          <div class="stage-title">The always-on COO</div>
+        </div>
+        <div class="stage-sub">Three surfaces for insights — ambient (woven into modules), proactive (nudge inbox), conversational (side panel). User chooses how loud.</div>
+
+        <div class="browser">
+          <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">bmt.app/cockpit</div></div>
+          <div class="browser-body" style="padding:14px; display:grid; grid-template-columns: 1fr 300px; gap:16px;">
+
+            <!-- main area -->
+            <div>
+              <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+                <div class="hand" style="font-size:22px;">Cockpit · ambient mode</div>
+                <div class="mono">COO presence: ambient + nudges + panel</div>
+              </div>
+
+              <!-- ambient example -->
+              <div class="module" style="margin-bottom:10px;">
+                <h5>Bookings · next 14 days <span class="tag accent">COO noticed</span></h5>
+                <div class="chart"></div>
+                <div class="hand" style="font-size:17px; color:var(--ink); margin-top:6px;">
+                  ↳ Thursday afternoons are <span class="hl">consistently empty</span>. Try a 15% "quiet hours" promo?
+                </div>
+                <div class="row" style="gap:8px; margin-top:6px;">
+                  <span class="btn accent">Draft it</span>
+                  <span class="btn">Later</span>
+                  <span class="btn">Why?</span>
+                </div>
+              </div>
+
+              <!-- nudge inbox -->
+              <div class="row" style="gap:10px;">
+                <div class="nudge" style="flex:1;">
+                  <div class="mono">⚡ nudge · high confidence</div>
+                  <div>3 regulars haven't booked in 6+ weeks. Send reminder?</div>
+                </div>
+                <div class="nudge" style="flex:1;">
+                  <div class="mono">💡 nudge · idea</div>
+                  <div>Weather forecast is rainy Sat → fewer walk-ins likely.</div>
+                </div>
+                <div class="nudge" style="flex:1;">
+                  <div class="mono">⚠️ nudge · watch</div>
+                  <div>Dye inventory runs out in ~14 days at current pace.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COO side panel -->
+            <aside class="coo-panel">
+              <div class="row" style="justify-content:space-between; align-items:center;">
+                <div class="hand" style="font-size:22px;">Your COO</div>
+                <span class="mono">◉ online</span>
+              </div>
+              <hr class="divider"/>
+              <div class="mono">today's focus</div>
+              <div style="margin:4px 0 10px;">Fill Thursday afternoons · keep rebook rate &gt; 60%</div>
+
+              <div class="mono">what I did overnight</div>
+              <ul style="margin:4px 0 10px; padding-left:18px; font-size:12px;">
+                <li>Re-ran demand forecast</li>
+                <li>Re-tuned your model on last wk</li>
+                <li>Spotted 2 regulars at risk</li>
+              </ul>
+
+              <div class="mono">ask me</div>
+              <div class="field" style="margin-top:4px;">"can I afford a 3rd chair?"</div>
+              <div class="row" style="gap:6px; margin-top:6px; flex-wrap:wrap;">
+                <span class="tag">why is cashflow off?</span>
+                <span class="tag">prep for tax</span>
+              </div>
+            </aside>
+
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span class="mono">COO volume:</span>
+          <span class="tag">ambient</span>
+          <span class="tag accent">+ nudges</span>
+          <span class="tag">+ side panel</span>
+          <span class="tag">silent</span>
+          <span class="note" style="position:static;">user-controlled loudness</span>
+        </div>
+
+        <!-- LEAN COACH sub-layer -->
+        <div style="margin-top:22px;">
+          <div class="mono">hidden layer · the secret goal</div>
+          <h3 class="hand" style="font-size:30px; margin:4px 0 6px;">Every nudge is secretly a <span class="hl">lean-startup loop</span>.</h3>
+          <p style="max-width:780px; color:var(--ink-soft); margin:0 0 10px;">The COO never says "hypothesis" or "MVP". But every suggestion it makes is structured as <strong>Build → Measure → Learn</strong>. Over 12 months, the operator internalizes the loop — and starts thinking about their business with the same rigor a startup founder does.</p>
+
+          <div class="bml">
+            <div class="step">
+              <div class="mono">build · the tiny experiment</div>
+              <div class="hand">"Try 15% off quiet-hour Thursdays for 2 weeks."</div>
+            </div>
+            <div class="step">
+              <div class="mono">measure · the number to watch</div>
+              <div class="hand">"We'll track: Thu chair-use &amp; margin per chair."</div>
+            </div>
+            <div class="step">
+              <div class="mono">learn · the recap, in plain words</div>
+              <div class="hand">"Filled Thu 68% → 92%. Margin up €310/wk. Keep it?"</div>
+            </div>
+          </div>
+
+          <div class="row" style="gap:10px; margin-top:12px; flex-wrap:wrap;">
+            <span class="tag">every experiment has a clear question</span>
+            <span class="tag">every result has a plain-word debrief</span>
+            <span class="tag accent">loops compound into operator intuition</span>
+            <span class="tag">after 6 months: "you've run 14 experiments"</span>
+          </div>
+
+          <div class="sticky" style="margin-top:14px; transform:rotate(-0.5deg);">
+            <strong>North star for the copy writer:</strong> never teach with jargon. Teach with the shape of the question itself.
+          </div>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">big decisions</div></div>
+
+      <!-- STAGE 9 -->
+      <section class="stage xwide" id="s9" data-screen-label="09 Scenarios">
+        <div class="stage-head">
+          <div class="stage-num">09</div>
+          <div class="stage-title">Scenarios — grow / stabilize / move</div>
+        </div>
+        <div class="stage-sub">When the user has a big decision, COO turns the cockpit into a sandbox. Three entry points shown here.</div>
+
+        <!-- 3 scenario patterns side by side -->
+        <div class="grid3" style="gap:18px;">
+
+          <!-- A: goal picker reshapes cockpit -->
+          <div>
+            <div class="mono" style="margin-bottom:6px;">pattern A · goal picker</div>
+            <div class="browser">
+              <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">·/goal</div></div>
+              <div class="browser-body" style="padding:14px; min-height:300px;">
+                <div class="hand" style="font-size:20px; margin-bottom:6px;">What are we working on?</div>
+                <div class="col" style="gap:8px;">
+                  <div class="scenario selected"><h4>🌱 Grow</h4><div class="mono">more revenue, same shop</div></div>
+                  <div class="scenario"><h4>⚖️ Stabilize</h4><div class="mono">smoother cashflow</div></div>
+                  <div class="scenario"><h4>📦 Move / relocate</h4><div class="mono">change location</div></div>
+                  <div class="scenario"><h4>👥 Hire</h4><div class="mono">add staff</div></div>
+                </div>
+                <div class="mono" style="margin-top:10px;">→ cockpit reshapes around the goal</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B: scenario sandbox -->
+          <div>
+            <div class="mono" style="margin-bottom:6px;">pattern B · sandbox</div>
+            <div class="browser">
+              <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">·/sim</div></div>
+              <div class="browser-body" style="padding:14px; min-height:300px;">
+                <div class="hand" style="font-size:20px; margin-bottom:4px;">If we moved to Neukölln…</div>
+                <div class="mono" style="margin-bottom:8px;">simulation · 18 months</div>
+
+                <div class="col" style="gap:6px;">
+                  <label class="mono">rent <input type="range" style="width:100%"/></label>
+                  <label class="mono">foot traffic <input type="range" style="width:100%"/></label>
+                  <label class="mono">price tier <input type="range" style="width:100%"/></label>
+                </div>
+
+                <hr class="divider"/>
+                <div class="grid2">
+                  <div class="kpi"><div class="label">cash in 12mo</div><div class="val">€+14k</div><div class="delta">vs staying</div></div>
+                  <div class="kpi"><div class="label">break-even</div><div class="val">mo 7</div><div class="delta">median</div></div>
+                </div>
+                <div class="chart" style="margin-top:8px;"></div>
+                <div class="mono">shaded = confidence band</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- C: COO-initiated -->
+          <div>
+            <div class="mono" style="margin-bottom:6px;">pattern C · COO-initiated</div>
+            <div class="browser">
+              <div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">·/inbox</div></div>
+              <div class="browser-body" style="padding:14px; min-height:300px;">
+                <div class="nudge" style="margin-bottom:10px;">
+                  <div class="mono">📣 your COO suggests</div>
+                  <div class="hand" style="font-size:18px;">
+                    You've been at 90%+ capacity 8 weeks straight. Want to explore hiring a 3rd stylist?
+                  </div>
+                  <div class="row" style="gap:6px; margin-top:6px;">
+                    <span class="btn accent">Explore →</span>
+                    <span class="btn">Not now</span>
+                  </div>
+                </div>
+
+                <div class="hand" style="font-size:18px; margin:10px 0 4px;">Side-by-side paths</div>
+                <div class="grid2">
+                  <div class="scenario"><h4>Hire</h4><div class="mono">+€2.1k/mo · risk: med</div></div>
+                  <div class="scenario"><h4>Raise prices 8%</h4><div class="mono">+€1.4k/mo · risk: low</div></div>
+                </div>
+                <div class="mono" style="margin-top:10px;">each card opens a full sim</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="sticky" style="margin-top:20px;">All three reuse the same simulation engine — just different front doors for different moods.</div>
+      </section>
+
+      <!-- end of flow -->
+      <div class="flow-arrow">✦<div class="mono">fin</div></div>
+
+      <section class="stage" style="width:380px;">
+        <div class="stage-head">
+          <div class="stage-num">∞</div>
+          <div class="stage-title">Over time…</div>
+        </div>
+        <div class="col" style="gap:10px;">
+          <div class="sketch" style="padding:10px 12px;">
+            <div class="hand" style="font-size:18px;">Model self-tunes</div>
+            <div class="mono">every decision + outcome trains the personal simulation</div>
+          </div>
+          <div class="sketch" style="padding:10px 12px;">
+            <div class="hand" style="font-size:18px;">New data sources</div>
+            <div class="mono">bank · pos · calendar · reviews · socials — each one sharpens the model</div>
+          </div>
+          <div class="sketch" style="padding:10px 12px;">
+            <div class="hand" style="font-size:18px;">Cockpit keeps reshaping</div>
+            <div class="mono">modules get promoted, demoted, retired</div>
+          </div>
+          <div class="sketch accent" style="padding:10px 12px;">
+            <div class="hand" style="font-size:18px;">COO gets smarter</div>
+            <div class="mono">tone, timing, loudness all tune to the individual operator</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- Tweaks panel -->
+<div id="tweaks-panel">
+  <h4>Tweaks</h4>
+  <label>Paper tone
+    <select id="tw-paper">
+      <option value="warm">warm</option>
+      <option value="cool">cool</option>
+      <option value="neutral">neutral</option>
+    </select>
+  </label>
+  <label>Accent hue
+    <input id="tw-hue" type="range" min="20" max="340" step="5" value="55"/>
+  </label>
+  <label>Grid dots
+    <select id="tw-grid"><option value="on">on</option><option value="off">off</option></select>
+  </label>
+  <label>Rotation jitter
+    <select id="tw-jitter"><option value="on">on</option><option value="off">off</option></select>
+  </label>
+  <label>Stage spacing
+    <input id="tw-gap" type="range" min="20" max="120" step="4" value="56"/>
+  </label>
+</div>
+
+<script>
+// ---------- Tweakable defaults ----------
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "paper": "warm",
+  "hue": 55,
+  "grid": "on",
+  "jitter": "on",
+  "gap": 56
+}/*EDITMODE-END*/;
+
+function applyTweaks(t) {
+  const root = document.documentElement;
+  // paper tone
+  const tones = {
+    warm:    { paper: 'oklch(0.97 0.01 80)',  paper2: 'oklch(0.94 0.012 80)',  ink: 'oklch(0.22 0.01 80)',  rule: 'oklch(0.78 0.01 80)', dot: 'oklch(0.86 0.01 80)' },
+    cool:    { paper: 'oklch(0.97 0.008 240)', paper2: 'oklch(0.94 0.01 240)',  ink: 'oklch(0.22 0.01 240)', rule: 'oklch(0.78 0.01 240)', dot: 'oklch(0.86 0.008 240)' },
+    neutral: { paper: 'oklch(0.97 0.004 180)', paper2: 'oklch(0.94 0.005 180)', ink: 'oklch(0.22 0.005 180)', rule: 'oklch(0.78 0.005 180)', dot: 'oklch(0.86 0.004 180)' }
+  };
+  const tone = tones[t.paper] || tones.warm;
+  root.style.setProperty('--paper', tone.paper);
+  root.style.setProperty('--paper-2', tone.paper2);
+  root.style.setProperty('--ink', tone.ink);
+  root.style.setProperty('--rule', tone.rule);
+  root.style.setProperty('--accent', `oklch(0.72 0.14 ${t.hue})`);
+  root.style.setProperty('--accent-soft', `oklch(0.88 0.08 ${t.hue})`);
+  document.body.style.backgroundImage = t.grid === 'on'
+    ? `radial-gradient(${tone.dot} 1px, transparent 1px)`
+    : 'none';
+  document.body.style.setProperty('--jitter', t.jitter === 'on' ? '1' : '0');
+  document.querySelectorAll('.stages').forEach(el => el.style.gap = t.gap + 'px');
+}
+
+applyTweaks(TWEAKS);
+
+// ---------- Persona tabs ----------
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    const p = t.dataset.persona;
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+    document.querySelectorAll('.pvariant').forEach(v2 => v2.style.display = 'none');
+    const el = document.getElementById('pv-' + p);
+    if (el) el.style.display = 'block';
+  });
+});
+
+// ---------- Minimap smooth scroll ----------
+document.querySelectorAll('.minimap a').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'});
+    }
+  });
+});
+
+// ---------- Tweaks host integration ----------
+window.addEventListener('message', (e) => {
+  const d = e.data || {};
+  if (d.type === '__activate_edit_mode') {
+    document.getElementById('tweaks-panel').classList.add('open');
+  } else if (d.type === '__deactivate_edit_mode') {
+    document.getElementById('tweaks-panel').classList.remove('open');
+  }
+});
+window.parent.postMessage({type: '__edit_mode_available'}, '*');
+
+function wire(id, key, parse = v => v) {
+  const el = document.getElementById(id);
+  el.value = TWEAKS[key];
+  el.addEventListener('input', () => {
+    TWEAKS[key] = parse(el.value);
+    applyTweaks(TWEAKS);
+    window.parent.postMessage({type: '__edit_mode_set_keys', edits: {[key]: TWEAKS[key]}}, '*');
+  });
+}
+wire('tw-paper', 'paper');
+wire('tw-hue', 'hue', v => +v);
+wire('tw-grid', 'grid');
+wire('tw-jitter', 'jitter');
+wire('tw-gap', 'gap', v => +v);
+</script>
+
+</body>
+</html>

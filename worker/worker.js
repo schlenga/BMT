@@ -1,20 +1,26 @@
-// Cloudflare Worker proxy for BMT — hides the Anthropic API key server-side
+// Cloudflare Worker proxy for BMT — hides the Anthropic API key server-side.
 //
 // Deploy:   cd worker && npx wrangler deploy
 // Secrets:  npx wrangler secret put ANTHROPIC_API_KEY
 //           npx wrangler secret put ALLOWED_ORIGIN  (e.g. https://schlenga.github.io)
 //
+// The new BMT flow fires many small AI calls per session (extrapolation,
+// nudges, shock plans, scenario narration, persona greetings). The limits
+// below are tuned for that: 60 req/min per IP, 2048 output tokens, one model.
+//
 // Cost protection:
 //   - ALLOWED_ORIGIN blocks requests from other sites
-//   - Rate limit: max 20 requests per minute per IP
-//   - Only POST to /v1/messages is forwarded (no other endpoints)
+//   - Rate limit: max 60 requests per minute per IP
+//   - Only POST to any path is forwarded (no other methods)
 //   - model is forced to claude-sonnet-4-20250514 (cheapest capable model)
 //   - max_tokens capped at 2048 per request
+//   - unknown top-level fields are dropped — we only pass the ones we trust
 
-const RATE_LIMIT = 20;        // requests per minute per IP
+const RATE_LIMIT = 60;        // requests per minute per IP
 const RATE_WINDOW = 60;       // seconds
 const MAX_TOKENS_CAP = 2048;  // hard cap on max_tokens
 const ALLOWED_MODEL = 'claude-sonnet-4-20250514';
+const ALLOWED_FIELDS = ['model','max_tokens','system','messages','temperature','top_p','stop_sequences'];
 
 // In-memory rate limit store (resets when worker restarts, which is fine)
 const ipCounts = new Map();
@@ -76,7 +82,14 @@ export default {
 
     try {
       // Parse and sanitize the request body
-      const body = await request.json();
+      const raw = await request.json();
+
+      // Only forward fields we trust — drops anything unexpected so a
+      // compromised frontend can't turn this into a general-purpose proxy.
+      const body = {};
+      for (const f of ALLOWED_FIELDS) {
+        if (raw[f] !== undefined) body[f] = raw[f];
+      }
 
       // Force model and cap tokens for cost control
       body.model = ALLOWED_MODEL;

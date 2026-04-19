@@ -1,249 +1,123 @@
-// store.js — localStorage persistence layer for BMT
+// store.js — persistence layer for BMT.
+// Single canonical state object in localStorage under one key. Everything else
+// reads/writes through here so the rest of the app can stay declarative.
 'use strict';
 
 var Store = (function() {
-  var KEYS = {
-    business: 'bmt_business',
-    canvas: 'bmt_canvas',
-    hypotheses: 'bmt_hypotheses',
-    wizardComplete: 'bmt_wizard_complete',
-    onboardingData: 'bmt_onboarding_data',
-    theme: 'bmt_theme',
-    terminology: 'bmt_terminology',
-    toolPrefs: 'bmt_tool_prefs',
-    promptState: 'bmt_prompt_state',
-    simConfig: 'bmt_sim_config',
-    simResults: 'bmt_sim_results'
-  };
+  var KEY = 'bmt.v2.state';
 
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-  }
-
-  function get(key) {
-    try {
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
-    } catch(e) { return null; }
-  }
-
-  function set(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
-  }
-
-  // Business
-  function getBusiness() { return get(KEYS.business); }
-  function saveBusiness(biz) { set(KEYS.business, biz); }
-
-  // Canvas
-  function getCanvas() {
-    return get(KEYS.canvas) || defaultCanvas();
-  }
-  function saveCanvas(canvas) { set(KEYS.canvas, canvas); }
-
-  function defaultCanvas() {
+  // The one schema everything else agrees on.
+  // This schema is the contract between onboarding, the cockpit, and the
+  // simulation engine. Keep it flat and JSON-friendly.
+  function defaultState() {
     return {
-      customerSegments: [],
-      valueProp: [],
-      channels: [],
-      customerRelationships: [],
-      revenueStreams: [],
-      keyResources: [],
-      keyActivities: [],
-      keyPartners: [],
-      costStructure: []
+      version: 2,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+
+      // Stage 1 — auth
+      auth: {
+        phone: null,
+        verified: false,
+        backup: null,   // 'phone2' | 'code' | 'trusted-person'
+      },
+
+      // Stage 2 — the workbench (context inbox, never "finishes")
+      bench: [], // [{ kind, value, addedAt, label }]
+
+      // Stage 3-4 — AI extrapolation + user corrections
+      // Confidence lets the UI speak in "we think / we're not sure" language.
+      profile: {
+        persona: null,  // 'lina' | 'klaus' | 'franka' | 'nadia' | null
+        businessType: null,
+        location: null,
+        priceTier: null,
+        customers: null,
+        staff: null,
+        confidence: {}, // { field: 0..1 }
+        whys: {},       // { field: 'short reason' }
+      },
+
+      // Stage 6 — connections
+      connections: {
+        // each: { status: 'off'|'on', sharpness: number, lastSeen: ts, suggested: bool }
+      },
+      sharpness: 0.42, // 0..1, recomputed by simulation
+
+      // Stage 7 — persona cockpit preferences
+      cockpit: {
+        variant: null,  // overrides profile.persona if user chose one manually
+        loudness: 'ambient', // 'silent'|'ambient'|'nudges'|'panel'
+      },
+
+      // Stage 8 — COO state + hypotheses (the secret lean-startup goal)
+      hypotheses: [], // [{ id, question, metric, status, target, actuals[], createdAt }]
+      nudges: [],     // [{ id, kind, copy, confidence, createdAt, dismissedAt }]
+
+      // Stage 9 — scenarios
+      scenarios: [],  // [{ id, goal, params, result, createdAt }]
+
+      // Simulation state — what the abstract model has learned so far
+      sim: {
+        params: {},     // numeric + categorical params the engine tunes over time
+        observations: [], // [{ t, signal, value }]
+        lastTunedAt: 0,
+      },
     };
   }
 
-  // Add item to a canvas element
-  function addCanvasItem(element, text) {
-    var canvas = getCanvas();
-    if (!canvas[element]) canvas[element] = [];
-    var item = { id: uid(), text: text, notes: '' };
-    canvas[element].push(item);
-    saveCanvas(canvas);
-    return item;
-  }
-
-  function updateCanvasItem(element, id, text) {
-    var canvas = getCanvas();
-    if (!canvas[element]) return;
-    for (var i = 0; i < canvas[element].length; i++) {
-      if (canvas[element][i].id === id) {
-        canvas[element][i].text = text;
-        break;
-      }
-    }
-    saveCanvas(canvas);
-  }
-
-  function removeCanvasItem(element, id) {
-    var canvas = getCanvas();
-    if (!canvas[element]) return;
-    canvas[element] = canvas[element].filter(function(item) { return item.id !== id; });
-    saveCanvas(canvas);
-  }
-
-  // Hypotheses
-  function getHypotheses() { return get(KEYS.hypotheses) || []; }
-  function saveHypotheses(hyps) { set(KEYS.hypotheses, hyps); }
-
-  function addHypothesis(hyp) {
-    var hyps = getHypotheses();
-    hyp.id = hyp.id || uid();
-    hyp.createdAt = hyp.createdAt || new Date().toISOString().slice(0, 10);
-    hyp.status = hyp.status || 'testing';
-    hyp.actuals = hyp.actuals || [];
-    hyps.push(hyp);
-    saveHypotheses(hyps);
-    return hyp;
-  }
-
-  function updateHypothesis(id, updates) {
-    var hyps = getHypotheses();
-    for (var i = 0; i < hyps.length; i++) {
-      if (hyps[i].id === id) {
-        for (var k in updates) {
-          if (updates.hasOwnProperty(k)) hyps[i][k] = updates[k];
-        }
-        break;
-      }
-    }
-    saveHypotheses(hyps);
-  }
-
-  function removeHypothesis(id) {
-    var hyps = getHypotheses().filter(function(h) { return h.id !== id; });
-    saveHypotheses(hyps);
-  }
-
-  function addActual(hypId, actual) {
-    var hyps = getHypotheses();
-    for (var i = 0; i < hyps.length; i++) {
-      if (hyps[i].id === hypId) {
-        actual.date = actual.date || new Date().toISOString().slice(0, 10);
-        hyps[i].actuals.push(actual);
-        break;
-      }
-    }
-    saveHypotheses(hyps);
-  }
-
-  // Wizard
-  function isWizardComplete() { return get(KEYS.wizardComplete) === true; }
-  function setWizardComplete() { set(KEYS.wizardComplete, true); }
-
-  // Theme (brand colors palette)
-  function getTheme() { return get(KEYS.theme); }
-  function saveTheme(theme) { set(KEYS.theme, theme); }
-
-  // Terminology (adaptive labels)
-  function getTerminology() { return get(KEYS.terminology); }
-  function saveTerminology(terms) { set(KEYS.terminology, terms); }
-
-  // Tool preferences
-  function getToolPrefs() { return get(KEYS.toolPrefs) || {}; }
-  function saveToolPrefs(prefs) { set(KEYS.toolPrefs, prefs); }
-
-  // Prompt state (completed / dismissed)
-  function getPromptState() {
-    return get(KEYS.promptState) || { completed: [], dismissed: [] };
-  }
-  function savePromptState(state) { set(KEYS.promptState, state); }
-
-  function completePrompt(key, hypId) {
-    var state = getPromptState();
-    state.completed.push({ key: key, at: new Date().toISOString().slice(0, 10), hypId: hypId || null });
-    savePromptState(state);
-  }
-
-  function dismissPrompt(key) {
-    var state = getPromptState();
-    if (state.dismissed.indexOf(key) < 0) state.dismissed.push(key);
-    savePromptState(state);
-  }
-
-  // Simulation config & results
-  function getSimConfig() { return get(KEYS.simConfig); }
-  function saveSimConfig(config) { set(KEYS.simConfig, config); }
-  function getSimResults() { return get(KEYS.simResults); }
-  function saveSimResults(results) { set(KEYS.simResults, results); }
-
-  // Onboarding progress (resume on browser close)
-  function getOnboardingData() { return get(KEYS.onboardingData); }
-  function saveOnboardingData(data) { set(KEYS.onboardingData, data); }
-  function clearOnboardingData() { localStorage.removeItem(KEYS.onboardingData); }
-
-  // Export / Import
-  function exportAll() {
-    return JSON.stringify({
-      business: getBusiness(),
-      canvas: getCanvas(),
-      hypotheses: getHypotheses(),
-      wizardComplete: isWizardComplete(),
-      toolPrefs: getToolPrefs(),
-      promptState: getPromptState(),
-      simConfig: getSimConfig(),
-      exportedAt: new Date().toISOString()
-    }, null, 2);
-  }
-
-  function importAll(jsonStr) {
+  function read() {
     try {
-      var data = JSON.parse(jsonStr);
-      if (data.business) saveBusiness(data.business);
-      if (data.canvas) saveCanvas(data.canvas);
-      if (data.hypotheses) saveHypotheses(data.hypotheses);
-      if (data.wizardComplete) setWizardComplete();
-      if (data.toolPrefs) saveToolPrefs(data.toolPrefs);
-      if (data.promptState) savePromptState(data.promptState);
-      if (data.simConfig) saveSimConfig(data.simConfig);
-      return true;
-    } catch(e) { return false; }
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return defaultState();
+      var s = JSON.parse(raw);
+      // Light migration guardrail
+      if (!s || s.version !== 2) return defaultState();
+      return s;
+    } catch (e) {
+      return defaultState();
+    }
   }
 
-  function resetAll() {
-    Object.keys(KEYS).forEach(function(k) {
-      localStorage.removeItem(KEYS[k]);
-    });
+  function write(s) {
+    s.updatedAt = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+    return s;
   }
 
-  return {
-    uid: uid,
-    getBusiness: getBusiness,
-    saveBusiness: saveBusiness,
-    getCanvas: getCanvas,
-    saveCanvas: saveCanvas,
-    addCanvasItem: addCanvasItem,
-    updateCanvasItem: updateCanvasItem,
-    removeCanvasItem: removeCanvasItem,
-    getHypotheses: getHypotheses,
-    saveHypotheses: saveHypotheses,
-    addHypothesis: addHypothesis,
-    updateHypothesis: updateHypothesis,
-    removeHypothesis: removeHypothesis,
-    addActual: addActual,
-    isWizardComplete: isWizardComplete,
-    setWizardComplete: setWizardComplete,
-    getTheme: getTheme,
-    saveTheme: saveTheme,
-    getTerminology: getTerminology,
-    saveTerminology: saveTerminology,
-    getToolPrefs: getToolPrefs,
-    saveToolPrefs: saveToolPrefs,
-    getPromptState: getPromptState,
-    savePromptState: savePromptState,
-    completePrompt: completePrompt,
-    dismissPrompt: dismissPrompt,
-    getSimConfig: getSimConfig,
-    saveSimConfig: saveSimConfig,
-    getSimResults: getSimResults,
-    saveSimResults: saveSimResults,
-    getOnboardingData: getOnboardingData,
-    saveOnboardingData: saveOnboardingData,
-    clearOnboardingData: clearOnboardingData,
-    exportAll: exportAll,
-    importAll: importAll,
-    resetAll: resetAll
-  };
+  var cached = null;
+  function get() { if (!cached) cached = read(); return cached; }
+  function set(updater) {
+    var s = get();
+    if (typeof updater === 'function') updater(s); else Object.assign(s, updater);
+    cached = write(s);
+    emit('change', cached);
+    return cached;
+  }
+  function reset() {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    cached = defaultState();
+    emit('change', cached);
+    return cached;
+  }
+
+  // Pub/sub so views re-render without global coupling
+  var listeners = {};
+  function on(evt, fn) {
+    (listeners[evt] = listeners[evt] || []).push(fn);
+    return function off() { listeners[evt] = listeners[evt].filter(function(f){return f!==fn;}); };
+  }
+  function emit(evt, payload) {
+    (listeners[evt] || []).forEach(function(fn){ try { fn(payload); } catch(e){} });
+  }
+
+  // Convenience: which persona are we showing the cockpit as?
+  function activePersona() {
+    var s = get();
+    return s.cockpit.variant || s.profile.persona || 'lina';
+  }
+
+  return { get: get, set: set, reset: reset, on: on, activePersona: activePersona };
 })();
+
+if (typeof module !== 'undefined') module.exports = Store;

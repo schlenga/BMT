@@ -1,202 +1,127 @@
-# BMT — Business Model Tracker
+# BMT — Keep doing what you do best. We'll run the rest.
 
-An interactive business model designer and tracker for small and medium businesses, built on Lean Startup methodology. Walk through a conversational onboarding, build a Business Model Canvas, and track testable hypotheses with real data.
+BMT is a business cockpit for small and medium businesses — hairdressers, plumbers, cafés, consultants. Running your business should be as easy as ordering a pizza. The front-end design (lifted from the handoff in `archive/design/`) drives the product: a 9-stage user flow, persona-adaptive cockpits, an always-on "COO" that nudges toward the lean-startup loop without ever saying the words.
 
-## How It Works
+**The design is the spec.** This repo is a first-pass implementation of it.
 
-### 1. Conversational Onboarding
+---
 
-The app walks you through 7 easy steps in a chat-like interface. As you answer, a live preview of your business model builds on the right side of the screen.
+## The flow (what this repo implements)
 
-| Step | What it asks | What it builds |
-|------|-------------|----------------|
-| Website | "Got a website?" (optional) | Scans your site and pre-fills your business info |
-| Pride | "What are you most proud of?" | Value Proposition |
-| Customers | "Who are your best customers?" | Customer Segments |
-| Economics | Revenue range, team size, main costs | Cost Structure + Revenue Streams |
-| Goal | "Biggest goal for the next 6 months?" | Priorities for hypothesis generation |
-| Concerns | "What keeps you up at night?" | Risk-focused hypotheses |
-| Hypotheses | AI generates testable hypotheses | Your tracking dashboard |
+| # | Stage | What happens |
+|---|-------|--------------|
+| 01 | **Land & verify** | Phone-number sign-in only — no Google, no Apple. SMS or voice code. Mandatory 2FA, explained in plain words. Trust receipt up front. |
+| 02 | **Workbench** | A visual scene with six ambient drop zones — photos, notebook, URL, receipt, tool, business card. No forms, no options, nothing required. The bench never "finishes" — it's a permanent context inbox. |
+| 03 | **Extrapolate** | Live narration as the AI reads whatever you dropped and guesses your business. Every step is visible. Every guess has a confidence score. |
+| 04 | **Confirm** | One-page "receipt" of what the AI thinks. Every row has a `↳ why`. Tap any line to correct — the simulation learns from your correction. |
+| 05 | **Cockpit** | Materializes in waves. Ghost modules (pale, dashed) show where more data would sharpen us. Sharpness meter in the header. |
+| 06 | **Connect** | Every ghost module is a hint. Stripe, bank, calendar, inbox — all passthrough, never retained. If the user doesn't have a payment system, we suggest one. |
+| 07 | **Adaptive** | One cockpit, four lives. Lina's is warm & mobile. Klaus's is a desktop command-post. Franka's is quiet & keyboard-driven. Nadia's is one-glance. |
+| 07b | **React** | Situation rooms: RFP detected, rent letter scanned, employee retiring. Structured plan + an explicit "do nothing" path. |
+| 08 | **COO** | Ambient / nudges / side panel — user-controlled loudness. Every nudge is secretly a Build → Measure → Learn loop (the secret teaching layer). |
+| 09 | **Scenarios** | Grow / Stabilize / Move / Hire. Goal picker, sandbox with sliders, or COO-initiated — all feeding the same simulation engine. |
 
-### 2. Business Model Canvas
+## How the back-end supports it
 
-Visual 9-element canvas based on the Business Model Canvas framework. Click any item to edit. Add new items with "+". Color-coded by hypothesis status (blue = testing, green = validated, red = at risk).
+### An abstract business model that learns
+`simulation.js` represents any business as a graph of stocks (cash, customers, capacity) and flows (acquisition, retention, price, cost, hours). Every parameter has a prior, a current value, and a weight. Every confirmation the user makes, every connected data source, and every outcome of a scenario becomes an **observation** that nudges a parameter toward reality — an EMA online-learning loop, not a big ML model. Sharpness = how much the parameter spreads have collapsed.
 
-### 3. Hypothesis Tracker
+### AI calls at many steps
+`ai.js` exposes distinct endpoints for every place in the flow the AI shows up:
+- `extrapolate(bench)` — guesses a business profile from what was dropped
+- `confirmNudge(field, guess)` — picks the right hedge copy per confidence
+- `greet(profile)` — persona-tuned cockpit greeting
+- `proposeNudges(state, sim)` — ambient + nudge cards for stage 8
+- `draftShockPlan(shock, state)` — situation-room plans for stage 7b
+- `narrateScenario(goal, simOut)` — plain-words narration for stage 9
+- `confidenceLabel(c)` — `"pretty sure"` / `"a guess"` / `"hunch"` / `"shot in the dark"`
 
-Each hypothesis has a target metric. Log actual data points over time. See progress bars, sparklines, and status badges. Mark hypotheses as validated, invalidated, or pivoted — the core Build-Measure-Learn loop.
+Every endpoint has a deterministic **offline fallback** so the app is usable without the proxy wired. The fallback is always flagged in the UI (`offline estimate`) — never silent.
 
-## Run Locally
+### Attitude — talk to the user, be clear when unsure
+Baked into `ai.js` system prompt:
+- Plain words, no consultant jargon (`"leverage"`, `"stakeholder"`, `"synergy"` banned).
+- Explicit uncertainty: "I'm not sure", "I guessed", "roughly".
+- Every AI claim comes with a one-sentence `why`.
+- The lean-startup loop is shape, not vocabulary — the words "hypothesis" or "MVP" never appear in user-facing copy.
 
-Just open in a browser — no build step, no server, no install:
+Every extrapolated field carries a `confidence ∈ [0, 1]`. The UI renders a hedge chip (`pretty sure` / `hunch`) next to every guess. When we're shaky, we say so.
 
-```bash
-open index.html           # macOS
-xdg-open index.html       # Linux
-start index.html          # Windows
-```
+---
 
-Or use a local server (needed if you enable the AI proxy):
+## Run locally
+
+No build step, no bundler. Just open in a browser:
 
 ```bash
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-## Deploy on GitHub Pages
+The app works fully offline — the keyword-based fallback produces plausible guesses and the simulation runs deterministically.
 
-1. Push the repository to GitHub.
-2. Go to **Settings → Pages**.
-3. Under **Source**, select **Deploy from a branch**.
-4. Set branch to `main` (or your branch) and folder to `/ (root)`.
-5. Click **Save**.
-6. Live at `https://<username>.github.io/BMT/` in a few minutes.
+## Wire up live AI (optional)
 
----
-
-## AI Features (Optional)
-
-The app works fully without AI — it uses keyword-based inference to suggest customer segments, costs, channels, and generates template hypotheses. But with AI enabled, you get:
-
-- **Website analysis** — paste your URL and Claude reads your site to pre-fill your business model
-- **Personalized hypotheses** — Claude generates specific, measurable hypotheses tailored to your business, your goals, and your concerns
-- **Smarter suggestions** — contextual recommendations based on your actual answers
-
-### How it works architecturally
-
-Your API key never touches the browser. Instead, a tiny Cloudflare Worker sits between the app and the Anthropic API:
-
-```
-Browser (GitHub Pages)  →  Cloudflare Worker (proxy)  →  Anthropic API
-                                ↑
-                          Your API key lives here
-                          (as a Cloudflare secret)
-```
-
-### Cost Protection Built In
-
-The proxy has multiple safeguards so you don't burn through tokens:
-
-| Protection | How it works |
-|-----------|--------------|
-| **Model locked** | The proxy forces `claude-sonnet-4-20250514` regardless of what the client requests. This is the most cost-effective capable model (~$3/M input, $15/M output tokens). |
-| **Token cap** | Every request is capped at 2,048 output tokens. No request can ask for more. |
-| **Rate limit** | 20 requests per minute per IP address. After that, requests get a 429 error. |
-| **Origin lock** | Only your GitHub Pages domain can call the proxy. Other sites get a 403. |
-| **Method lock** | Only POST requests are forwarded. GET, PUT, DELETE are blocked. |
-
-### Expected cost per user onboarding
-
-A typical onboarding makes 2-3 API calls:
-
-| Call | Input tokens (approx) | Output tokens (approx) | Cost |
-|------|----------------------|------------------------|------|
-| Website analysis | ~4,000 | ~300 | ~$0.02 |
-| Hypothesis generation | ~1,000 | ~1,500 | ~$0.03 |
-| **Total per onboarding** | | | **~$0.05** |
-
-That's about **5 cents per new user**. 20 users = ~$1. You can set a [spending limit on your Anthropic account](https://console.anthropic.com/settings/limits) as an additional safety net.
-
-### Setup Guide (Step by Step)
-
-**Prerequisites:** Node.js installed (for the `npx` command). If you don't have it: [nodejs.org](https://nodejs.org/).
-
-**Step 1: Deploy the proxy**
+The AI layer goes through a Cloudflare Worker proxy that hides your Anthropic API key. Same setup as v1:
 
 ```bash
 cd worker
-npx wrangler login          # Opens browser, log in with Cloudflare (free account)
-npx wrangler deploy          # Deploys the worker
-```
-
-This prints a URL like `https://bmt-proxy.<your-subdomain>.workers.dev`. Copy it.
-
-**Step 2: Set your API key as a secret**
-
-```bash
-npx wrangler secret put ANTHROPIC_API_KEY
-# Paste your key when prompted (it won't be visible)
-# Get a key at: https://console.anthropic.com/settings/keys
-```
-
-**Step 3: Lock the proxy to your site**
-
-```bash
-npx wrangler secret put ALLOWED_ORIGIN
-# Type: https://schlenga.github.io
-# (or http://localhost:8000 for local testing)
-```
-
-**Step 4: Connect the app to the proxy**
-
-Open `ai.js` and set the proxy URL on line 8:
-
-```js
-var PROXY_URL = 'https://bmt-proxy.<your-subdomain>.workers.dev/v1/messages';
-```
-
-Commit and push. That's it — AI features are live.
-
-**Step 5 (recommended): Set a spending limit**
-
-Go to [console.anthropic.com/settings/limits](https://console.anthropic.com/settings/limits) and set a monthly spend limit (e.g., $5 or $10). This is your ultimate safety net regardless of anything else.
-
-### Testing the AI
-
-1. Open the app and start the onboarding wizard.
-2. On the first step, paste a website URL and click "Analyze". You should see a typing indicator, then extracted business info.
-3. Complete all steps. On the last step, hypotheses should have a "rationale" line under each one — that means they came from Claude, not the keyword fallback.
-4. Check your [Anthropic dashboard](https://console.anthropic.com/) to verify token usage.
-
-### Disabling AI
-
-To turn off AI at any time, just set `PROXY_URL` back to empty in `ai.js`:
-
-```js
-var PROXY_URL = '';  // AI disabled, keyword fallback only
-```
-
-Or delete/pause the Cloudflare Worker:
-
-```bash
-cd worker
-npx wrangler delete
-```
-
-### Changing the model
-
-The model is locked in `worker/worker.js` on the `ALLOWED_MODEL` line. If you want to use a different model (e.g., `claude-haiku-4-5-20251001` for even cheaper calls at ~$0.01 per onboarding), change it there and redeploy:
-
-```bash
-cd worker
+npx wrangler login
 npx wrangler deploy
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put ALLOWED_ORIGIN      # e.g. https://schlenga.github.io
 ```
+
+Then open `app.js` and set `AI.setProxy('https://bmt-proxy.<subdomain>.workers.dev/v1/messages')` at the bottom of `start()`.
+
+### Cost protection (in the worker)
+- Model forced to `claude-sonnet-4-20250514`
+- `max_tokens` capped at 2048
+- 60 requests / minute / IP (new flow fires more per session)
+- Only POST forwarded
+- ALLOWED_ORIGIN lock
+- Unknown request fields stripped before proxying
+
+Expected cost per onboarding: ~6 AI calls × ~€0.01 each = **~€0.06 per new user**.
 
 ---
 
-## File Structure
+## File map
 
 ```
-index.html             # App shell + all CSS (warm & friendly design)
-app.js                 # Router, navigation, settings page
-ai.js                  # AI integration layer (Claude API, website scraping, fallback)
-wizard.js              # Conversational onboarding (7 steps, split-screen)
-canvas.js              # Business Model Canvas view (9-element grid)
-tracker.js             # Hypothesis tracking dashboard
-store.js               # localStorage persistence layer
+index.html          # App shell + all 9 views
+styles.css          # Design system — lifted from the handoff
+app.js              # Router / state machine across the 9 stages
+store.js            # Single-key localStorage persistence
+ai.js               # Claude API layer — attitude + offline fallbacks
+simulation.js       # Abstract stocks/flows model with online learning
+onboarding.js       # Stages 01-04 (auth, workbench, extrapolate, confirm)
+cockpit.js          # Stages 05 + 07 (materialize + persona variants)
+connect.js          # Stage 06 (sharpness-ranked connections)
+shocks.js           # Stage 07b (situation rooms)
+coo.js              # Stage 08 (ambient/nudges/panel + BML coach)
+scenarios.js        # Stage 09 (goal picker / sandbox / COO-initiated)
 
-worker/                # Cloudflare Worker proxy (deploy separately)
-  worker.js            # Proxy code with rate limiting + cost protection
-  wrangler.toml        # Cloudflare deployment config
+worker/worker.js    # Cloudflare Worker proxy (cost protection + origin lock)
 
-archive/               # Original OxO consulting simulator (archived)
+archive/v1/         # The previous product (BMC + hypothesis tracker)
+archive/design/     # The handoff bundle this was built from
 ```
 
-## Tech Stack
+## Where this is still thin (honest TODO)
 
-- Vanilla HTML, CSS, JavaScript — no frameworks, no build tools, no bundler
-- localStorage for all persistence (business model, hypotheses, onboarding progress)
-- Cloudflare Workers for API proxy (free tier: 100,000 requests/day)
-- Claude API (Sonnet) for AI features
-- Responsive design — works on desktop and mobile
-- Static site — deployable on GitHub Pages, Netlify, or any web server
+- Bench upload is text-only — real photo/file upload, OCR on receipts, and actual tool OAuth are stubs.
+- Auth doesn't actually call an SMS provider — any 6-digit code passes.
+- Shock detection is seeded (RFP, rent, retirement). A real detector would watch an inbox/calendar feed.
+- The `/v1/messages` Cloudflare Worker is unchanged from v1 except for the tighter field allowlist and the bumped rate limit.
+- No tests in this pass. v1 had a jest suite; it's in `archive/v1/tests/` if you want to adapt it.
+- The simulation is intentionally simple. It's *useful abstraction*, not a deep simulator. More parameters and more observation sources (bank, calendar, POS) are the next big unlock.
+
+## Personas the design is built for
+
+| | Lina · 26 | Klaus · 51 | Franka · 43 | Nadia · 38 |
+|---|---|---|---|---|
+| Business | 2-chair hair salon | Plumbing · 12 staff · 4 vans | Marketing agency · 2 freelancers | Café · 6 staff · 2 kids |
+| Tech | Insta-native | Prefers a real keyboard | Tries every new tool | No spare bandwidth |
+| What she/he'd love | "Tell me who to text, what reel worked" | "Where should 4 vans be tomorrow" | "Draft the proposal, chase the invoice" | "One glance. One nudge. That's it." |
+| Cockpit mood | warm, mobile, big type | green, dense, desktop | slate, minimal, ⌘K | cream, one-glance, tablet |
