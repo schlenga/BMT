@@ -90,6 +90,7 @@ Expected cost per onboarding: ~6 AI calls × ~€0.01 each = **~€0.06 per new 
 
 ```
 index.html          # App shell + all 9 views
+admin.html          # Internal admin console (tenants, usage, evals, audit)
 styles.css          # Design system — lifted from the handoff
 app.js              # Router / state machine across the 9 stages
 store.js            # Single-key localStorage persistence
