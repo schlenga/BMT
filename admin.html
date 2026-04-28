@@ -1,0 +1,1679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>BMT — Admin Console</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ---- shared lo-fi sketch vocabulary (matches BMT User Flow) ---- */
+:root {
+  --paper: oklch(0.97 0.01 80);
+  --paper-2: oklch(0.94 0.012 80);
+  --ink: oklch(0.22 0.01 80);
+  --ink-soft: oklch(0.45 0.01 80);
+  --ink-faint: oklch(0.75 0.01 80);
+  --accent: oklch(0.72 0.14 55);
+  --accent-soft: oklch(0.88 0.08 55);
+  --rule: oklch(0.78 0.01 80);
+
+  --ok:   oklch(0.75 0.12 150);
+  --warn: oklch(0.80 0.14 80);
+  --bad:  oklch(0.72 0.16 30);
+
+  --fe: oklch(0.92 0.05 260);
+  --be: oklch(0.92 0.05 150);
+  --ev: oklch(0.92 0.06 55);
+  --ml: oklch(0.92 0.05 310);
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Kalam', 'Caveat', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+body {
+  background-image: radial-gradient(oklch(0.86 0.01 80) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+.hand { font-family: 'Caveat', cursive; font-weight: 600; }
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.sketch {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px 14px 11px 13px / 12px 10px 14px 11px;
+  background: var(--paper);
+  position: relative;
+}
+.sketch.dashed { border-style: dashed; }
+.sketch.soft   { border-color: var(--ink-faint); }
+.sketch.accent { border-color: var(--accent); background: var(--accent-soft); }
+
+.hl { background: linear-gradient(transparent 60%, var(--accent-soft) 60% 92%, transparent 92%); padding: 0 2px; }
+
+.tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border: 1.2px solid var(--ink);
+  border-radius: 20px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.tag.accent { border-color: var(--accent); background: var(--accent-soft); }
+.tag.ok    { background: var(--ok); }
+.tag.warn  { background: var(--warn); }
+.tag.bad   { background: var(--bad); color: var(--paper); }
+.tag.fe { background: var(--fe); }
+.tag.be { background: var(--be); }
+.tag.ev { background: var(--ev); }
+.tag.ml { background: var(--ml); }
+
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px 10px 9px 11px / 10px 9px 11px 8px;
+  background: var(--paper);
+  font-family: 'Kalam', sans-serif;
+  font-size: 12px;
+  box-shadow: 2px 2px 0 var(--ink-faint);
+  cursor: pointer;
+  user-select: none;
+}
+.btn.primary { background: var(--ink); color: var(--paper); box-shadow: 2px 2px 0 var(--accent); }
+.btn.accent  { background: var(--accent-soft); border-color: var(--accent); box-shadow: 2px 2px 0 var(--accent); }
+.btn.danger  { background: oklch(0.92 0.08 30); border-color: var(--bad); }
+
+.field {
+  border: 1.5px solid var(--ink);
+  border-radius: 8px 10px 9px 11px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+.divider { height: 1.5px; border: none; border-top: 1.5px dashed var(--ink-faint); margin: 14px 0; }
+
+.sticky {
+  background: var(--accent-soft);
+  border: 1.5px solid var(--accent);
+  border-radius: 4px 8px 4px 8px;
+  padding: 10px 12px;
+  font-family: 'Caveat', cursive;
+  font-size: 17px;
+  color: var(--ink);
+  transform: rotate(-1.2deg);
+  box-shadow: 2px 3px 0 oklch(0.82 0.08 55);
+  max-width: 320px;
+}
+
+/* canvas */
+.canvas { padding: 56px 40px 120px; min-width: max-content; }
+.canvas-scroll { overflow-x: auto; overflow-y: hidden; min-height: 100vh; }
+
+/* title */
+.title-block { max-width: 1040px; margin-bottom: 36px; position: relative; }
+.title-block h1 { font-family: 'Caveat', cursive; font-weight: 700; font-size: 58px; margin: 0 0 6px; line-height: 0.95; }
+.title-block p { margin: 0; color: var(--ink-soft); max-width: 760px; }
+
+/* minimap */
+.minimap {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+  background: var(--paper); border: 1.5px solid var(--ink); border-radius: 24px;
+  padding: 6px 10px; box-shadow: 2px 2px 0 var(--ink-faint);
+  z-index: 500; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+}
+.minimap a { color: var(--ink-soft); text-decoration: none; padding: 3px 8px; border-radius: 14px; }
+.minimap a:hover { background: var(--accent-soft); color: var(--ink); }
+
+/* stages row */
+.stages { display: flex; gap: 48px; align-items: flex-start; }
+.stage { flex: 0 0 auto; width: 1120px; position: relative; }
+.stage.wide { width: 1320px; }
+.stage.narrow { width: 620px; }
+
+.stage-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.stage-num   { font-family: 'Caveat', cursive; font-size: 52px; font-weight: 700; color: var(--accent); line-height: 0.9; }
+.stage-title { font-family: 'Caveat', cursive; font-size: 30px; font-weight: 600; line-height: 1; }
+.stage-sub   { font-size: 13px; color: var(--ink-soft); max-width: 760px; margin-bottom: 16px; }
+
+.flow-arrow {
+  align-self: center; margin-top: 180px;
+  font-family: 'Caveat', cursive; font-size: 38px; color: var(--ink-faint);
+  display:flex; flex-direction:column; align-items:center; gap:4px; flex: 0 0 auto;
+}
+.flow-arrow .mono { font-size: 10px; }
+
+/* ---- admin app chrome ---- */
+.app {
+  border: 1.8px solid var(--ink);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 4px 5px 0 var(--ink-faint);
+  overflow: hidden;
+}
+.app-chrome {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-bottom: 1.5px dashed var(--ink-faint);
+  background: var(--paper-2);
+}
+.app-chrome .dot { width:10px; height:10px; border:1.2px solid var(--ink); border-radius:50%; }
+.app-chrome .url {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-soft);
+  border: 1px solid var(--ink-faint); border-radius: 6px; padding: 3px 10px;
+  background: var(--paper);
+}
+.who {
+  display:flex; align-items:center; gap:6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-soft);
+}
+.who .avatar {
+  width: 18px; height: 18px; border:1.2px solid var(--ink); border-radius:50%;
+  background: oklch(0.90 0.06 260);
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  min-height: 680px;
+}
+
+/* left nav */
+.nav {
+  border-right: 1.5px dashed var(--ink-faint);
+  padding: 14px 12px;
+  background: var(--paper-2);
+}
+.nav h4 {
+  margin: 0 0 6px; font-family: 'Caveat', cursive; font-size: 22px; font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+}
+.nav h4::before { content: "★"; color: var(--accent); font-size: 18px; }
+.nav .mono { margin-bottom: 14px; }
+.nav .sec { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; margin: 14px 0 4px; padding-left: 4px; }
+.nav ul { list-style: none; padding: 0; margin: 0; }
+.nav li {
+  padding: 6px 10px; border-radius: 6px 10px 6px 10px;
+  font-size: 13px; cursor: pointer; user-select: none;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.nav li:hover { background: var(--paper); }
+.nav li.active { background: var(--ink); color: var(--paper); }
+.nav li .pill {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  padding: 1px 5px; border-radius: 8px;
+  background: var(--accent-soft); border: 1px solid var(--accent); color: var(--ink);
+}
+.nav li.active .pill { background: var(--accent); border-color: var(--paper); color: var(--ink); }
+
+.env-switch {
+  margin-top: 18px; padding: 8px 10px;
+  border: 1.5px dashed var(--ink-faint); border-radius: 8px;
+  font-size: 12px; background: var(--paper);
+}
+.env-switch .mono { margin-bottom: 4px; font-size: 9px; }
+.env-switch .pick { display: flex; gap: 4px; }
+.env-switch .pick span {
+  flex: 1; text-align: center;
+  border: 1px solid var(--ink-faint); border-radius: 4px;
+  padding: 3px 0; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--ink-soft);
+}
+.env-switch .pick span.sel { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* main pane */
+.main { padding: 18px 22px; }
+
+.pane-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  border-bottom: 1.2px dashed var(--ink-faint); padding-bottom: 10px; margin-bottom: 14px;
+}
+.pane-head h2 { margin: 0; font-family: 'Caveat', cursive; font-size: 32px; font-weight: 700; line-height: 1; }
+.pane-head p  { margin: 2px 0 0; font-size: 12px; color: var(--ink-soft); max-width: 480px; }
+.pane-head .tools { display: flex; gap: 6px; align-items: center; }
+
+.crumbs { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-soft); letter-spacing: 0.06em; margin-bottom: 4px; }
+
+/* KPI */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi { border:1.5px solid var(--ink); border-radius: 10px 12px 10px 14px; padding: 10px 12px; background: var(--paper); }
+.kpi .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; color: var(--ink-soft); letter-spacing: 0.06em;}
+.kpi .val { font-family: 'Caveat', cursive; font-size: 30px; line-height: 1; margin-top: 4px; }
+.kpi .delta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+.kpi .delta.up   { color: oklch(0.45 0.12 150); }
+.kpi .delta.down { color: oklch(0.50 0.14 30); }
+.kpi .spark {
+  margin-top: 6px; height: 28px;
+  background:
+    repeating-linear-gradient(to right, var(--ink-faint) 0 1px, transparent 1px 30px);
+  border-top: 1.2px dashed var(--ink-faint);
+  position: relative;
+}
+.kpi .spark svg { width: 100%; height: 100%; }
+
+/* tables */
+.table {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: var(--paper);
+  overflow: hidden;
+}
+.table .tr {
+  display: grid;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1.2px dashed var(--ink-faint);
+  font-size: 12px;
+  gap: 6px;
+}
+.table .tr:last-child { border-bottom: none; }
+.table .th {
+  background: var(--paper-2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink);
+}
+.table .tr:hover:not(.th) { background: oklch(0.95 0.015 80); }
+.cell-user { display:flex; align-items:center; gap:8px; }
+.cell-user .av {
+  width: 28px; height: 28px; border: 1.2px solid var(--ink); border-radius: 50%;
+  background: var(--paper-2); flex: 0 0 auto;
+}
+.cell-user .av.a { background: oklch(0.90 0.06 20); }
+.cell-user .av.b { background: oklch(0.90 0.04 140); }
+.cell-user .av.c { background: oklch(0.90 0.06 260); }
+.cell-user .av.d { background: oklch(0.90 0.06 80); }
+.cell-user .av.e { background: oklch(0.90 0.05 310); }
+.cell-user .av.f { background: oklch(0.90 0.05 180); }
+.cell-user .nm { font-weight: 600; }
+.cell-user .sm { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-soft); }
+
+/* filter bar */
+.filter {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap;
+}
+.filter .chip {
+  border: 1.5px solid var(--ink); border-radius: 16px;
+  padding: 3px 10px; font-size: 12px; background: var(--paper); cursor: pointer;
+}
+.filter .chip.on { background: var(--ink); color: var(--paper); }
+.filter .search {
+  flex: 1; min-width: 220px;
+  border: 1.5px solid var(--ink); border-radius: 8px 10px 8px 10px;
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-soft);
+  background: var(--paper);
+}
+
+/* two-col split */
+.split { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+.split-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* sub card */
+.card {
+  border: 1.5px solid var(--ink); border-radius: 10px;
+  padding: 12px 14px; background: var(--paper);
+}
+.card > h4 {
+  margin: 0 0 8px; font-family: 'Caveat', cursive; font-size: 22px; font-weight: 700;
+  display:flex; justify-content:space-between; align-items:baseline; gap: 8px;
+}
+.card h4 .mono { font-weight: 500; }
+
+/* chart placeholder */
+.chart {
+  height: 140px;
+  background:
+    repeating-linear-gradient(to right, var(--ink-faint) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(to top, var(--ink-faint) 0 1px, transparent 1px 28px);
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: 6px;
+  position: relative; margin-top: 4px;
+  overflow: hidden;
+}
+.chart svg { width: 100%; height: 100%; display:block; }
+
+/* status dot */
+.sd { display:inline-block; width:10px; height:10px; border-radius:50%; border:1.2px solid var(--ink); margin-right:4px; vertical-align: middle;}
+.sd.ok { background: var(--ok); }
+.sd.warn { background: var(--warn); }
+.sd.bad { background: var(--bad); }
+.sd.off { background: var(--paper-2); }
+
+/* pipeline / backend wire */
+.wire {
+  border: 1.5px solid var(--ink); border-radius: 12px; padding: 14px;
+  background: var(--paper);
+}
+.wire .lane {
+  display: grid; grid-template-columns: 160px 1fr;
+  gap: 10px; align-items: center;
+  padding: 8px 0; border-bottom: 1.2px dashed var(--ink-faint);
+}
+.wire .lane:last-child { border-bottom: none; }
+.wire .lane-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft);
+}
+.wire .hop { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; }
+.wire .node {
+  border: 1.5px solid var(--ink); border-radius: 6px 10px 6px 10px;
+  padding: 6px 10px; background: var(--paper-2); min-width: 140px;
+}
+.wire .node.secret { background: oklch(0.92 0.08 30); border-color: oklch(0.50 0.10 30); }
+.wire .node.worker { background: oklch(0.94 0.04 230); border-color: oklch(0.45 0.08 230); }
+.wire .node.api    { background: oklch(0.94 0.04 310); border-color: oklch(0.45 0.08 310); }
+.wire .node.admin  { background: var(--accent-soft); border-color: var(--accent); }
+.wire .node .mono  { font-size: 9px; }
+.wire .arr { color: var(--ink-soft); font-family: 'Caveat', cursive; font-size: 20px; }
+
+/* audit timeline */
+.aud { border-left: 1.5px dashed var(--ink); padding-left: 12px; margin-left: 8px; }
+.aud .ev { margin-bottom: 10px; position: relative; font-size: 12px; }
+.aud .ev::before {
+  content: ""; position:absolute; left:-18px; top: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.2px solid var(--ink); background: var(--paper);
+}
+.aud .ev.write::before { background: var(--accent); border-color: var(--accent); }
+.aud .ev.auth::before  { background: var(--ok); }
+.aud .ev.warn::before  { background: var(--warn); }
+.aud .ev.bad::before   { background: var(--bad); }
+.aud .ts { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-soft); }
+
+/* role matrix */
+.mtx {
+  display:grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  border: 1.5px solid var(--ink); border-radius: 10px 14px 11px 13px; background: var(--paper);
+  overflow: hidden;
+}
+.mtx > div {
+  padding: 8px 10px;
+  border-right: 1.2px dashed var(--ink-faint);
+  border-bottom: 1.2px dashed var(--ink-faint);
+  font-size: 12px;
+}
+.mtx > div:nth-child(5n) { border-right: none; }
+.mtx .mhead {
+  background: var(--paper-2);
+  font-family: 'JetBrains Mono', monospace; text-transform: uppercase;
+  font-size: 10px; letter-spacing: 0.06em; color: var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink);
+}
+.mtx .mrow-label {
+  font-family: 'Caveat', cursive; font-size: 18px; background: var(--paper-2);
+}
+.tick { font-family: 'Caveat', cursive; font-size: 20px; color: oklch(0.45 0.12 150); }
+.cross { color: var(--ink-faint); }
+.half  { color: oklch(0.55 0.14 55); }
+
+/* drawer (user detail) */
+.drawer {
+  position: absolute;
+  right: 12px; top: 12px; bottom: 12px;
+  width: 460px;
+  background: var(--paper);
+  border: 1.8px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: -4px 4px 0 var(--ink-faint);
+  padding: 16px;
+  z-index: 10;
+  overflow: auto;
+}
+.drawer h3 { margin: 0 0 4px; font-family: 'Caveat', cursive; font-size: 28px; }
+.drawer .meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-soft); }
+.drawer .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.drawer .kv {
+  display: grid; grid-template-columns: 120px 1fr;
+  font-size: 12px; padding: 5px 0;
+  border-bottom: 1px dashed var(--ink-faint);
+}
+.drawer .kv .k { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* flag */
+.flag {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px; border:1.2px solid var(--ink); border-radius: 6px;
+  background: var(--paper-2); margin-bottom: 6px;
+}
+.flag .toggle {
+  width: 30px; height: 16px; border: 1.2px solid var(--ink);
+  border-radius: 10px; background: var(--paper); position: relative;
+}
+.flag .toggle::after {
+  content: ""; position: absolute; left: 2px; top: 1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1px solid var(--ink); background: var(--paper);
+}
+.flag.on .toggle { background: var(--ink); }
+.flag.on .toggle::after { left: 16px; background: var(--accent); border-color: var(--accent); }
+
+/* legend row */
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; align-items: center; }
+
+/* note callout */
+.note {
+  position: absolute; font-family: 'Caveat', cursive; font-size: 17px;
+  color: var(--accent); max-width: 200px; line-height: 1.1;
+}
+.note::before { content: "↳"; margin-right: 4px; }
+
+</style>
+</head>
+<body>
+
+<nav class="minimap" aria-label="sections">
+  <a href="#s0">00 Orient</a>
+  <a href="#s1">01 Overview</a>
+  <a href="#s2">02 Tenants</a>
+  <a href="#s3">03 Team &amp; roles</a>
+  <a href="#s4">04 Usage &amp; cost</a>
+  <a href="#s5">05 Models &amp; evals</a>
+  <a href="#s6">06 Connectors</a>
+  <a href="#s7">07 Audit &amp; security</a>
+  <a href="#s8">08 Backend wire</a>
+</nav>
+
+<div class="canvas-scroll">
+  <div class="canvas">
+
+    <!-- TITLE -->
+    <header class="title-block">
+      <div class="mono">Project BMT · Admin console · lo-fi v0.1 · 19 Apr 2026</div>
+      <h1>Run the thing that<br/>runs <span class="hl">their thing</span>.</h1>
+      <p>Internal console for you &amp; colleagues once BMT is a company. Manage tenants (operators) and their users, monitor Claude usage &amp; cost, watch the eval loop, inspect connector health, audit every sensitive action. Same back-end spine as the user flow — this is the other end of the same wires. Scroll right →</p>
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="tag">desktop only</span>
+        <span class="tag">lo-fi · structure only</span>
+        <span class="tag accent">reads from the same Worker</span>
+        <span class="tag">audit-logged</span>
+        <span class="tag">no PII prompt bodies</span>
+      </div>
+    </header>
+
+    <div class="stages" id="flow">
+
+      <!-- STAGE 0 — ORIENT -->
+      <section class="stage narrow" id="s0" data-screen-label="00 Orient">
+        <div class="stage-head">
+          <div class="stage-num">00</div>
+          <div class="stage-title">Who is this for?</div>
+        </div>
+        <div class="stage-sub">Three admin personas, one console. The nav adapts to role (see 03).</div>
+
+        <div class="card">
+          <h4>Founders + ops <span class="mono">today</span></h4>
+          <div style="font-size:13px;">You &amp; 1–2 colleagues. Full access. Spend most time in <strong>02 Tenants</strong> and <strong>04 Usage</strong>.</div>
+        </div>
+        <div class="card" style="margin-top:10px;">
+          <h4>Support / CX <span class="mono">hire #3–6</span></h4>
+          <div style="font-size:13px;">Read-most-things, write-specific-things. Can impersonate an operator (with consent + audit trail) to see what they see. Lives in <strong>02</strong> and <strong>07 Audit</strong>.</div>
+        </div>
+        <div class="card" style="margin-top:10px;">
+          <h4>ML / eval eng <span class="mono">hire #5+</span></h4>
+          <div style="font-size:13px;">Owns <strong>05 Models &amp; evals</strong>. Pushes prompt changes behind feature flags, gates on the golden set (BMT-108).</div>
+        </div>
+
+        <div class="sticky" style="margin-top:14px; transform:rotate(-0.5deg);">
+          <strong>Design rule:</strong> every destructive action here is logged, rate-limited, and requires a reason. We're standing next to someone's livelihood.
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">the console</div></div>
+
+      <!-- STAGE 1 — OVERVIEW (main screen) -->
+      <section class="stage wide" id="s1" data-screen-label="01 Overview">
+        <div class="stage-head">
+          <div class="stage-num">01</div>
+          <div class="stage-title">Overview — the one screen you open each morning</div>
+        </div>
+        <div class="stage-sub">Tenants + users + live system health + today's Claude spend + anything on fire. Everything else is a click away.</div>
+
+        <div class="app">
+          <div class="app-chrome">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="url">admin.bmt.internal / overview</div>
+            <div class="who"><span class="avatar"></span>robin · founder · prod</div>
+          </div>
+
+          <div class="app-body">
+            <!-- NAV -->
+            <aside class="nav">
+              <h4>BMT Admin</h4>
+              <div class="mono">internal · v0.1</div>
+
+              <div class="sec">operate</div>
+              <ul>
+                <li class="active">Overview <span class="pill">!</span></li>
+                <li>Tenants <span class="pill">1.2k</span></li>
+                <li>Users</li>
+                <li>Support queue <span class="pill">4</span></li>
+              </ul>
+
+              <div class="sec">health</div>
+              <ul>
+                <li>Usage &amp; cost</li>
+                <li>Models &amp; evals <span class="pill">2</span></li>
+                <li>Connectors</li>
+                <li>Incidents</li>
+              </ul>
+
+              <div class="sec">trust</div>
+              <ul>
+                <li>Audit log</li>
+                <li>Security</li>
+                <li>Feature flags</li>
+                <li>Team &amp; roles</li>
+              </ul>
+
+              <div class="env-switch">
+                <div class="mono">environment</div>
+                <div class="pick">
+                  <span>dev</span>
+                  <span>stg</span>
+                  <span class="sel">prod</span>
+                </div>
+              </div>
+            </aside>
+
+            <!-- MAIN -->
+            <section class="main">
+              <div class="crumbs">BMT / operate / overview</div>
+              <div class="pane-head">
+                <div>
+                  <h2>Good morning, robin.</h2>
+                  <p>Nothing on fire. 3 things could use a glance — listed below.</p>
+                </div>
+                <div class="tools">
+                  <span class="btn">Last 24h ▾</span>
+                  <span class="btn">Export CSV</span>
+                  <span class="btn primary">Page on-call</span>
+                </div>
+              </div>
+
+              <!-- KPIs -->
+              <div class="kpis">
+                <div class="kpi">
+                  <div class="label">active tenants</div>
+                  <div class="val">1,248</div>
+                  <div class="delta up">+22 this wk</div>
+                  <div class="spark"><svg viewBox="0 0 120 28" preserveAspectRatio="none"><polyline fill="none" stroke="var(--ink)" stroke-width="1.2" points="0,22 12,20 24,19 36,17 48,16 60,14 72,13 84,10 96,9 108,7 120,6"/></svg></div>
+                </div>
+                <div class="kpi">
+                  <div class="label">wau / mau</div>
+                  <div class="val">0.62</div>
+                  <div class="delta up">+3pp vs last wk</div>
+                  <div class="spark"><svg viewBox="0 0 120 28" preserveAspectRatio="none"><polyline fill="none" stroke="var(--ink)" stroke-width="1.2" points="0,14 12,16 24,13 36,12 48,14 60,11 72,12 84,9 96,10 108,8 120,7"/></svg></div>
+                </div>
+                <div class="kpi">
+                  <div class="label">claude spend · today</div>
+                  <div class="val">€ 184.20</div>
+                  <div class="delta">budget € 260 · 71%</div>
+                  <div class="spark"><svg viewBox="0 0 120 28" preserveAspectRatio="none"><polyline fill="none" stroke="var(--ink)" stroke-width="1.2" points="0,24 12,22 24,20 36,21 48,18 60,16 72,18 84,14 96,15 108,12 120,10"/></svg></div>
+                </div>
+                <div class="kpi">
+                  <div class="label">p95 /extrapolate</div>
+                  <div class="val">14.2 s</div>
+                  <div class="delta down">+1.4s · Sonnet slow</div>
+                  <div class="spark"><svg viewBox="0 0 120 28" preserveAspectRatio="none"><polyline fill="none" stroke="var(--ink)" stroke-width="1.2" points="0,14 12,14 24,13 36,14 48,12 60,13 72,12 84,14 96,10 108,12 120,6"/></svg></div>
+                </div>
+              </div>
+
+              <!-- two cols: attention / system health -->
+              <div class="split">
+                <!-- needs attention -->
+                <div class="card">
+                  <h4>Needs a glance <span class="mono">3 items</span></h4>
+                  <div class="sketch accent" style="padding:8px 10px; margin-bottom:6px;">
+                    <div class="mono">BMT-206 · LLM timeout rate ↑</div>
+                    <div style="font-size:13px;">Sonnet p95 breached SLO 14m in the last hour. Auto-fallback to Haiku is ON. <span class="tag ml">sonnet</span> <span class="tag">fallback · OK</span></div>
+                    <div class="row" style="margin-top:4px; display:flex; gap:6px;">
+                      <span class="btn">Open incident</span>
+                      <span class="btn">Mute 1h</span>
+                    </div>
+                  </div>
+                  <div class="sketch" style="padding:8px 10px; margin-bottom:6px;">
+                    <div class="mono">eval · golden set regression</div>
+                    <div style="font-size:13px;">Prompt change <code>extract.v37</code> ↑ hallucination rate 0.8pp on golden set. CI blocked the merge — review.</div>
+                    <div class="row" style="margin-top:4px; display:flex; gap:6px;">
+                      <span class="btn">Diff</span>
+                      <span class="btn">Rollback</span>
+                    </div>
+                  </div>
+                  <div class="sketch" style="padding:8px 10px;">
+                    <div class="mono">billing · 2 tenants over plan</div>
+                    <div style="font-size:13px;">Nadia's Café &amp; Franka &amp; Co both 30%+ past their token allowance — decide to absorb or nudge upgrade.</div>
+                    <div class="row" style="margin-top:4px; display:flex; gap:6px;">
+                      <span class="btn">Review tenants →</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- system health -->
+                <div class="card">
+                  <h4>System <span class="mono">live · 10s refresh</span></h4>
+                  <div style="display:grid; grid-template-columns: 1fr auto; row-gap:6px; column-gap:8px; font-size:12.5px;">
+                    <div><span class="sd ok"></span>Worker <code>bmt-claude-proxy</code></div><div><span class="mono">250 POPs · p50 42ms</span></div>
+                    <div><span class="sd ok"></span>api.anthropic.com</div><div><span class="mono">healthy</span></div>
+                    <div><span class="sd warn"></span>Sonnet queue</div><div><span class="mono">backlog 38 · p95 ↑</span></div>
+                    <div><span class="sd ok"></span>Postgres · primary</div><div><span class="mono">cpu 31%</span></div>
+                    <div><span class="sd ok"></span>Postgres · replica</div><div><span class="mono">lag 0.4s</span></div>
+                    <div><span class="sd ok"></span>Object store · user docs</div><div><span class="mono">reads 1.2k/s</span></div>
+                    <div><span class="sd warn"></span>Stripe webhooks</div><div><span class="mono">3 retries pending</span></div>
+                    <div><span class="sd ok"></span>PSD2 aggregator</div><div><span class="mono">6 banks OK</span></div>
+                    <div><span class="sd off"></span>Gmail connector <em>(beta)</em></div><div><span class="mono">off · dev only</span></div>
+                  </div>
+                  <hr class="divider"/>
+                  <div class="legend">
+                    <span><span class="sd ok"></span>ok</span>
+                    <span><span class="sd warn"></span>degraded</span>
+                    <span><span class="sd bad"></span>down</span>
+                    <span><span class="sd off"></span>off</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- three cols -->
+              <div class="split-3" style="margin-top:14px;">
+                <div class="card">
+                  <h4>New tenants today <span class="mono">18</span></h4>
+                  <div style="font-size:12px; color:var(--ink-soft);">split by industry guess (stage 03)</div>
+                  <div class="chart">
+                    <svg viewBox="0 0 200 140" preserveAspectRatio="none">
+                      <g stroke="var(--ink)" stroke-width="1.2" fill="none">
+                        <rect x="10" y="70" width="18" height="60"/>
+                        <rect x="34" y="50" width="18" height="80"/>
+                        <rect x="58" y="80" width="18" height="50"/>
+                        <rect x="82" y="30" width="18" height="100" fill="var(--accent-soft)"/>
+                        <rect x="106" y="95" width="18" height="35"/>
+                        <rect x="130" y="60" width="18" height="70"/>
+                        <rect x="154" y="85" width="18" height="45"/>
+                      </g>
+                      <g font-family="JetBrains Mono" font-size="7" fill="var(--ink-soft)">
+                        <text x="19" y="138" text-anchor="middle">hair</text>
+                        <text x="43" y="138" text-anchor="middle">café</text>
+                        <text x="67" y="138" text-anchor="middle">trade</text>
+                        <text x="91" y="138" text-anchor="middle">agency</text>
+                        <text x="115" y="138" text-anchor="middle">retail</text>
+                        <text x="139" y="138" text-anchor="middle">wellness</text>
+                        <text x="163" y="138" text-anchor="middle">other</text>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <h4>Onboarding funnel <span class="mono">24h</span></h4>
+                  <div style="font-size:12px; font-family: 'JetBrains Mono', monospace;">
+                    <div style="display:grid; grid-template-columns: 140px 1fr 50px; gap:6px; align-items:center; margin-bottom:4px;">
+                      <span>land</span>
+                      <div style="height:10px; border:1px solid var(--ink); background: var(--ink); width:100%;"></div>
+                      <span>820</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 140px 1fr 50px; gap:6px; align-items:center; margin-bottom:4px;">
+                      <span>phone verified</span>
+                      <div style="height:10px; border:1px solid var(--ink); background: var(--ink); width:72%;"></div>
+                      <span>591</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 140px 1fr 50px; gap:6px; align-items:center; margin-bottom:4px;">
+                      <span>workbench item</span>
+                      <div style="height:10px; border:1px solid var(--ink); background: var(--ink); width:58%;"></div>
+                      <span>476</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 140px 1fr 50px; gap:6px; align-items:center; margin-bottom:4px;">
+                      <span>extrapolate done</span>
+                      <div style="height:10px; border:1px solid var(--ink); background: var(--accent); width:51%;"></div>
+                      <span>418</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 140px 1fr 50px; gap:6px; align-items:center;">
+                      <span>cockpit opened</span>
+                      <div style="height:10px; border:1px solid var(--ink); background: var(--accent-soft); width:46%;"></div>
+                      <span>378</span>
+                    </div>
+                  </div>
+                  <hr class="divider"/>
+                  <div class="mono">46% land → cockpit · target 55%</div>
+                </div>
+
+                <div class="card">
+                  <h4>Support queue <span class="mono">4 open</span></h4>
+                  <div style="font-size:12px;">
+                    <div style="padding:6px 0; border-bottom:1px dashed var(--ink-faint); display:flex; justify-content:space-between;">
+                      <div><strong>Lina @ Cut Berlin</strong><div class="mono" style="color:var(--ink-soft);">"extrapolate said barber — I do hair"</div></div>
+                      <span class="tag warn">2h</span>
+                    </div>
+                    <div style="padding:6px 0; border-bottom:1px dashed var(--ink-faint); display:flex; justify-content:space-between;">
+                      <div><strong>Klaus · Rohr&amp;Co</strong><div class="mono" style="color:var(--ink-soft);">stripe connector failing since 09:12</div></div>
+                      <span class="tag bad">4h</span>
+                    </div>
+                    <div style="padding:6px 0; border-bottom:1px dashed var(--ink-faint); display:flex; justify-content:space-between;">
+                      <div><strong>Franka &amp; Co</strong><div class="mono" style="color:var(--ink-soft);">invoice PDF template request</div></div>
+                      <span class="tag">1d</span>
+                    </div>
+                    <div style="padding:6px 0; display:flex; justify-content:space-between;">
+                      <div><strong>Nadia · Leipzig</strong><div class="mono" style="color:var(--ink-soft);">plan upgrade q</div></div>
+                      <span class="tag">2d</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sticky" style="margin-top:18px; transform:rotate(-0.4deg); max-width:640px;">
+                <strong>One-screen rule:</strong> if we can't see health + money + attention in one glance, we're asking the on-call person to do the routing for us.
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="note" style="top:-10px; right:-30px;">everything below is a deep-dive into one of these cards</div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">click "Tenants"</div></div>
+
+      <!-- STAGE 2 — TENANTS + USER DRAWER -->
+      <section class="stage wide" id="s2" data-screen-label="02 Tenants">
+        <div class="stage-head">
+          <div class="stage-num">02</div>
+          <div class="stage-title">Tenants — every operator's shop, one row each</div>
+        </div>
+        <div class="stage-sub">A tenant = one business (Klaus's plumbing, Lina's salon). Inside each tenant are 1–N users (owner + staff). Click a row → drawer with full profile, connectors, correction history, and the few buttons a support agent actually needs.</div>
+
+        <div class="app" style="position: relative;">
+          <div class="app-chrome">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="url">admin.bmt.internal / tenants</div>
+            <div class="who"><span class="avatar"></span>robin · founder · prod</div>
+          </div>
+          <div class="app-body">
+            <aside class="nav">
+              <h4>BMT Admin</h4>
+              <div class="mono">internal · v0.1</div>
+              <div class="sec">operate</div>
+              <ul>
+                <li>Overview</li>
+                <li class="active">Tenants <span class="pill">1.2k</span></li>
+                <li>Users</li>
+                <li>Support queue</li>
+              </ul>
+              <div class="sec">health</div>
+              <ul>
+                <li>Usage &amp; cost</li>
+                <li>Models &amp; evals</li>
+                <li>Connectors</li>
+                <li>Incidents</li>
+              </ul>
+              <div class="sec">trust</div>
+              <ul>
+                <li>Audit log</li>
+                <li>Security</li>
+                <li>Feature flags</li>
+                <li>Team &amp; roles</li>
+              </ul>
+            </aside>
+
+            <section class="main">
+              <div class="crumbs">BMT / operate / tenants</div>
+              <div class="pane-head">
+                <div>
+                  <h2>1,248 tenants</h2>
+                  <p>22 new this week · 14 churned · 3 over-plan.</p>
+                </div>
+                <div class="tools">
+                  <span class="btn">Saved views ▾</span>
+                  <span class="btn">Columns</span>
+                  <span class="btn primary">+ Invite</span>
+                </div>
+              </div>
+
+              <!-- filter bar -->
+              <div class="filter">
+                <input class="search" placeholder="search by name · phone · email · tenant id"/>
+                <span class="chip on">all</span>
+                <span class="chip">active</span>
+                <span class="chip">trialing</span>
+                <span class="chip">paused</span>
+                <span class="chip">over-plan</span>
+                <span class="chip">low-conf model</span>
+                <span class="chip">✨ flagged</span>
+              </div>
+
+              <!-- table -->
+              <div class="table">
+                <div class="tr th" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr;">
+                  <div>tenant · owner</div>
+                  <div>industry (guess · conf)</div>
+                  <div>plan</div>
+                  <div>last active</div>
+                  <div>30d spend</div>
+                  <div>connectors</div>
+                  <div>model state</div>
+                  <div></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr; background: var(--accent-soft);">
+                  <div class="cell-user"><div class="av a"></div><div><div class="nm">Cut · Berlin</div><div class="sm">Lina Müller · +49 ·· 42··</div></div></div>
+                  <div><span class="tag">hair salon</span> <span class="mono" style="text-transform:none;">0.91</span></div>
+                  <div><span class="tag">starter</span></div>
+                  <div>8 min ago</div>
+                  <div>€ 3.40</div>
+                  <div><span class="sd ok"></span>3 / 4</div>
+                  <div><span class="tag ok">fresh</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr;">
+                  <div class="cell-user"><div class="av b"></div><div><div class="nm">Rohr &amp; Co · Köln</div><div class="sm">Klaus Becker · +49 ·· 18··</div></div></div>
+                  <div><span class="tag">plumbing</span> <span class="mono" style="text-transform:none;">0.96</span></div>
+                  <div><span class="tag accent">growth</span></div>
+                  <div>3h ago</div>
+                  <div>€ 41.20</div>
+                  <div><span class="sd bad"></span>2 / 5 · Stripe down</div>
+                  <div><span class="tag warn">stale · 6h</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr;">
+                  <div class="cell-user"><div class="av c"></div><div><div class="nm">Franka &amp; Co · Hamburg</div><div class="sm">Franka Weiß · +49 ·· 77··</div></div></div>
+                  <div><span class="tag">mkt agency</span> <span class="mono" style="text-transform:none;">0.88</span></div>
+                  <div><span class="tag accent">growth</span></div>
+                  <div>yesterday</div>
+                  <div>€ 62.10 <span class="tag bad" style="font-size:9px;">over</span></div>
+                  <div><span class="sd ok"></span>4 / 4</div>
+                  <div><span class="tag ok">fresh</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr;">
+                  <div class="cell-user"><div class="av d"></div><div><div class="nm">Nadia's Café · Leipzig</div><div class="sm">Nadia Koch · +49 ·· 55··</div></div></div>
+                  <div><span class="tag">café</span> <span class="mono" style="text-transform:none;">0.93</span></div>
+                  <div><span class="tag">starter</span></div>
+                  <div>1h ago</div>
+                  <div>€ 18.80 <span class="tag warn" style="font-size:9px;">82%</span></div>
+                  <div><span class="sd warn"></span>2 / 4 · POS flaky</div>
+                  <div><span class="tag ok">fresh</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr; opacity:0.6;">
+                  <div class="cell-user"><div class="av e"></div><div><div class="nm">Bäckerei Lenz</div><div class="sm">A. Lenz · +49 ·· 11··</div></div></div>
+                  <div><span class="tag">bakery</span> <span class="mono" style="text-transform:none;">0.72</span></div>
+                  <div><span class="tag">paused</span></div>
+                  <div>23 days ago</div>
+                  <div>€ 0.00</div>
+                  <div><span class="sd off"></span>0 / 3</div>
+                  <div><span class="tag">stale</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr;">
+                  <div class="cell-user"><div class="av f"></div><div><div class="nm">Studio Nord · Kiel</div><div class="sm">T. Jensen · +49 ·· 03··</div></div></div>
+                  <div><span class="tag">tattoo</span> <span class="mono" style="text-transform:none;">0.54</span> <span class="tag warn" style="font-size:9px;">low</span></div>
+                  <div><span class="tag">trialing</span></div>
+                  <div>2h ago</div>
+                  <div>€ 1.10</div>
+                  <div><span class="sd warn"></span>1 / 3</div>
+                  <div><span class="tag warn">needs review</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+                <div class="tr" style="grid-template-columns: 1.5fr 1fr 0.8fr 1fr 0.9fr 0.9fr 1fr 0.8fr;">
+                  <div class="cell-user"><div class="av a"></div><div><div class="nm">Yoga Mitte</div><div class="sm">S. Hoffmann · +49 ·· 92··</div></div></div>
+                  <div><span class="tag">wellness</span> <span class="mono" style="text-transform:none;">0.81</span></div>
+                  <div><span class="tag">starter</span></div>
+                  <div>4 days ago</div>
+                  <div>€ 7.20</div>
+                  <div><span class="sd ok"></span>3 / 3</div>
+                  <div><span class="tag ok">fresh</span></div>
+                  <div style="text-align:right;"><span class="btn">Open →</span></div>
+                </div>
+
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-soft);">
+                <div>showing 1–7 of 1,248</div>
+                <div style="display:flex; gap:6px;">
+                  <span class="btn">‹ prev</span>
+                  <span class="btn">next ›</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- DRAWER (tenant detail) -->
+            <aside class="drawer">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <h3>Cut · Berlin</h3>
+                  <div class="meta">tnt_01HVQ… · Lina Müller (owner)</div>
+                </div>
+                <span class="btn">× close</span>
+              </div>
+              <div class="row">
+                <span class="tag">hair salon</span>
+                <span class="tag accent">conf 0.91</span>
+                <span class="tag">starter plan</span>
+                <span class="tag ok">model fresh</span>
+              </div>
+
+              <hr class="divider"/>
+
+              <div class="kv"><div class="k">phone</div><div>+49 ·· 42 · verified · 2FA ON</div></div>
+              <div class="kv"><div class="k">email</div><div>lina@cut-berlin.de <span class="mono" style="color:var(--ink-soft);">(unused)</span></div></div>
+              <div class="kv"><div class="k">signed up</div><div>04 Mar 2026 · via insta bio link</div></div>
+              <div class="kv"><div class="k">users</div><div>2 · Lina (owner), Mira (stylist · read)</div></div>
+              <div class="kv"><div class="k">connectors</div><div><span class="sd ok"></span>SumUp · <span class="sd ok"></span>Instagram · <span class="sd ok"></span>Calendar · <span class="sd off"></span>Bank (PSD2)</div></div>
+              <div class="kv"><div class="k">30d claude</div><div>€ 3.40 · 68k tokens · mostly Haiku</div></div>
+              <div class="kv"><div class="k">last 5 nudges</div><div>4 accepted · 1 snoozed · 0 "bad"</div></div>
+              <div class="kv"><div class="k">corrections</div><div>3 fields edited · "2 chairs → 2", "Fr close 19→20", industry confirmed</div></div>
+
+              <hr class="divider"/>
+              <div class="mono">support actions</div>
+              <div class="row">
+                <span class="btn">Impersonate <span class="mono" style="color:var(--ink-soft); font-size:9px;">requires consent + audit</span></span>
+                <span class="btn">Re-run extrapolate</span>
+                <span class="btn">Invite co-user</span>
+                <span class="btn">Contact Lina</span>
+              </div>
+
+              <hr class="divider"/>
+              <div class="mono">danger zone</div>
+              <div class="row">
+                <span class="btn danger">Reset 2FA</span>
+                <span class="btn danger">Export + delete (GDPR)</span>
+                <span class="btn danger">Suspend tenant</span>
+              </div>
+              <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-soft); margin-top:6px;">
+                every action here prompts for a <strong>reason</strong> &amp; writes to audit log (stage 07).
+              </div>
+
+            </aside>
+          </div>
+        </div>
+
+        <div class="sticky" style="margin-top:14px; transform:rotate(-0.6deg);">
+          <strong>Reads:</strong> the drawer is 95% read-only. We look first. The 4 action rows are the <em>only</em> writes a CX person can do without escalating.
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">permissions</div></div>
+
+      <!-- STAGE 3 — TEAM & ROLES -->
+      <section class="stage" id="s3" data-screen-label="03 Team and roles">
+        <div class="stage-head">
+          <div class="stage-num">03</div>
+          <div class="stage-title">Team &amp; roles — who can do what</div>
+        </div>
+        <div class="stage-sub">Start simple. 4 roles, a clear matrix. Every row in 02 Tenants respects this. Impersonation is always a role of its own, never bundled.</div>
+
+        <div class="split">
+          <div class="card">
+            <h4>Your team <span class="mono">3 humans · 1 service</span></h4>
+            <div class="table">
+              <div class="tr th" style="grid-template-columns: 1.4fr 0.9fr 1.2fr 0.8fr 0.6fr;">
+                <div>person</div><div>role</div><div>last sign-in</div><div>2FA</div><div></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.9fr 1.2fr 0.8fr 0.6fr;">
+                <div class="cell-user"><div class="av c"></div><div><div class="nm">robin (you)</div><div class="sm">founder</div></div></div>
+                <div><span class="tag accent">owner</span></div><div>2 min ago · Berlin</div><div><span class="tag ok">ON</span></div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.9fr 1.2fr 0.8fr 0.6fr;">
+                <div class="cell-user"><div class="av a"></div><div><div class="nm">co-founder</div><div class="sm">ops &amp; support</div></div></div>
+                <div><span class="tag">admin</span></div><div>14 min ago · Lisbon</div><div><span class="tag ok">ON</span></div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.9fr 1.2fr 0.8fr 0.6fr;">
+                <div class="cell-user"><div class="av b"></div><div><div class="nm">hire #3 (open)</div><div class="sm">cx · invited</div></div></div>
+                <div><span class="tag">support</span></div><div>pending invite</div><div><span class="tag warn">—</span></div>
+                <div style="text-align:right;"><span class="btn">Resend</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.9fr 1.2fr 0.8fr 0.6fr;">
+                <div class="cell-user"><div class="av e" style="background: oklch(0.92 0.02 80);"></div><div><div class="nm">svc · eval-ci</div><div class="sm">github actions · machine</div></div></div>
+                <div><span class="tag">service</span></div><div>never (token only)</div><div><span class="tag">—</span></div>
+                <div style="text-align:right;"><span class="btn">Rotate key</span></div>
+              </div>
+            </div>
+            <div style="text-align:right; margin-top:8px;"><span class="btn primary">+ Invite teammate</span></div>
+          </div>
+
+          <div class="card">
+            <h4>Role matrix <span class="mono">edit with care</span></h4>
+            <div class="mtx">
+              <div class="mhead">capability</div>
+              <div class="mhead">owner</div>
+              <div class="mhead">admin</div>
+              <div class="mhead">support</div>
+              <div class="mhead">eval-eng</div>
+
+              <div class="mrow-label">View tenants list</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="tick">✓</div><div class="tick">✓</div>
+
+              <div class="mrow-label">Open tenant drawer</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="tick">✓</div><div class="half">◐ redacted</div>
+
+              <div class="mrow-label">Impersonate (w/ consent)</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="tick">✓</div><div class="cross">—</div>
+
+              <div class="mrow-label">Re-run extrapolate</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="tick">✓</div><div class="tick">✓</div>
+
+              <div class="mrow-label">Suspend / delete tenant</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="cross">—</div><div class="cross">—</div>
+
+              <div class="mrow-label">Rotate Claude key</div>
+              <div class="tick">✓</div><div class="half">◐ 2-person</div><div class="cross">—</div><div class="cross">—</div>
+
+              <div class="mrow-label">Push prompt change</div>
+              <div class="tick">✓</div><div class="cross">—</div><div class="cross">—</div><div class="tick">✓</div>
+
+              <div class="mrow-label">Flip feature flag</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="cross">—</div><div class="tick">✓</div>
+
+              <div class="mrow-label">Read prompt bodies</div>
+              <div class="cross">—</div><div class="cross">—</div><div class="cross">—</div><div class="cross">—</div>
+              <!-- nobody. bodies never stored. -->
+
+              <div class="mrow-label">Export audit log</div>
+              <div class="tick">✓</div><div class="tick">✓</div><div class="cross">—</div><div class="tick">✓</div>
+            </div>
+            <div class="sticky" style="margin-top:10px; transform:rotate(-0.4deg); font-size:15px;">
+              "Read prompt bodies" is a hard NO for everyone — including the founders. The Worker scrubs PII and only meta is kept (BMT-110).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">the money</div></div>
+
+      <!-- STAGE 4 — USAGE & COST -->
+      <section class="stage wide" id="s4" data-screen-label="04 Usage and cost">
+        <div class="stage-head">
+          <div class="stage-num">04</div>
+          <div class="stage-title">Usage &amp; cost — Claude, per tenant, per capability</div>
+        </div>
+        <div class="stage-sub">Money flows out-the-door through the Worker. Every call is metered by tenant, surface, model. This screen tells us who's expensive, whether they're worth it, and when to throttle vs. upsell.</div>
+
+        <div class="app">
+          <div class="app-chrome">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="url">admin.bmt.internal / usage</div>
+            <div class="who"><span class="avatar"></span>robin · founder · prod</div>
+          </div>
+          <div class="app-body">
+            <aside class="nav">
+              <h4>BMT Admin</h4>
+              <div class="mono">internal · v0.1</div>
+              <div class="sec">operate</div>
+              <ul>
+                <li>Overview</li>
+                <li>Tenants</li>
+                <li>Users</li>
+                <li>Support queue</li>
+              </ul>
+              <div class="sec">health</div>
+              <ul>
+                <li class="active">Usage &amp; cost</li>
+                <li>Models &amp; evals</li>
+                <li>Connectors</li>
+                <li>Incidents</li>
+              </ul>
+            </aside>
+
+            <section class="main">
+              <div class="crumbs">BMT / health / usage &amp; cost</div>
+              <div class="pane-head">
+                <div>
+                  <h2>€ 5,126 month-to-date</h2>
+                  <p>vs € 4,820 budget · 106% · projected € 6,340 EOM at current pace.</p>
+                </div>
+                <div class="tools">
+                  <span class="btn">last 30d ▾</span>
+                  <span class="btn">by surface ▾</span>
+                  <span class="btn primary">set budget alert</span>
+                </div>
+              </div>
+
+              <!-- big chart -->
+              <div class="card">
+                <h4>Daily spend by model <span class="mono">stacked</span></h4>
+                <div class="chart" style="height:200px;">
+                  <svg viewBox="0 0 600 200" preserveAspectRatio="none">
+                    <defs></defs>
+                    <g>
+                      <!-- stacked bars · 30 days -->
+                      <g>
+                        <!-- placeholder stacked bars -->
+                        <rect x="8"  y="140" width="14" height="52" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="8"  y="100" width="14" height="40" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="8"  y="82"  width="14" height="18" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="28" y="150" width="14" height="42" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="28" y="110" width="14" height="40" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="28" y="94"  width="14" height="16" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="48" y="130" width="14" height="62" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="48" y="85"  width="14" height="45" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="48" y="65"  width="14" height="20" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="68" y="120" width="14" height="72" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="68" y="75"  width="14" height="45" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="68" y="58"  width="14" height="17" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="88" y="132" width="14" height="60" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="88" y="92"  width="14" height="40" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="88" y="76"  width="14" height="16" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="108" y="118" width="14" height="74" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="108" y="72"  width="14" height="46" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="108" y="52"  width="14" height="20" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="128" y="110" width="14" height="82" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="128" y="62"  width="14" height="48" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="128" y="40"  width="14" height="22" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+
+                        <rect x="148" y="100" width="14" height="92" fill="oklch(0.90 0.08 150)" stroke="var(--ink)"/>
+                        <rect x="148" y="55"  width="14" height="45" fill="oklch(0.88 0.10 230)" stroke="var(--ink)"/>
+                        <rect x="148" y="35"  width="14" height="20" fill="oklch(0.82 0.13 310)" stroke="var(--ink)"/>
+                      </g>
+                      <!-- budget line -->
+                      <line x1="0" y1="60" x2="600" y2="60" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4"/>
+                      <text x="584" y="56" font-size="9" font-family="JetBrains Mono" text-anchor="end" fill="var(--accent)">budget</text>
+                    </g>
+                  </svg>
+                </div>
+                <div class="legend" style="margin-top:8px;">
+                  <span><span class="sd" style="background:oklch(0.90 0.08 150);"></span>Haiku (~61%)</span>
+                  <span><span class="sd" style="background:oklch(0.88 0.10 230);"></span>Sonnet (~29%)</span>
+                  <span><span class="sd" style="background:oklch(0.82 0.13 310);"></span>Opus (~8%)</span>
+                  <span><span class="sd" style="background:oklch(0.92 0.05 60);"></span>local (~2%)</span>
+                </div>
+              </div>
+
+              <!-- per-surface + top tenants -->
+              <div class="split" style="margin-top:14px;">
+                <div class="card">
+                  <h4>By surface <span class="mono">mtd</span></h4>
+                  <div style="font-size:12px;">
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:8px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>03 · Extrapolate (onboarding)</div><div class="mono" style="text-transform:none;">€ 1,840</div><div class="tag">36%</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:8px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>07 · Cockpit nudges</div><div class="mono" style="text-transform:none;">€ 1,240</div><div class="tag">24%</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:8px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>08 · Ask-your-COO</div><div class="mono" style="text-transform:none;">€ 910</div><div class="tag">18%</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:8px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>09 · Scenarios (Opus)</div><div class="mono" style="text-transform:none;">€ 640</div><div class="tag">12%</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:8px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>07b · React-with-me</div><div class="mono" style="text-transform:none;">€ 396</div><div class="tag">8%</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:8px; padding:4px 0;">
+                      <div>shadow · guardrails</div><div class="mono" style="text-transform:none;">€ 100</div><div class="tag">2%</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <h4>Top-spend tenants <span class="mono">mtd · 30</span></h4>
+                  <div style="font-size:12px;">
+                    <div style="display:grid; grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr; gap:6px; padding:4px 0; border-bottom:1.2px solid var(--ink);" class="mono">
+                      <div>tenant</div><div>€ mtd</div><div>plan</div><div>€/day trend</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>Franka &amp; Co</div><div>€ 62</div><div><span class="tag accent" style="font-size:9px;">growth</span></div><div>↗︎</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>Rohr &amp; Co</div><div>€ 41</div><div><span class="tag accent" style="font-size:9px;">growth</span></div><div>→</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>Nadia's Café</div><div>€ 19</div><div><span class="tag" style="font-size:9px;">starter</span></div><div>↗︎</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                      <div>Studio Nord</div><div>€ 14</div><div><span class="tag" style="font-size:9px;">trial</span></div><div>↗︎</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr; gap:6px; padding:4px 0;">
+                      <div>Cut · Berlin</div><div>€ 3</div><div><span class="tag" style="font-size:9px;">starter</span></div><div>→</div>
+                    </div>
+                  </div>
+                  <div class="sketch accent" style="padding:6px 8px; margin-top:8px; font-size:12px;">
+                    <strong>2 tenants over plan.</strong> Suggest: absorb for now, nudge both toward growth tier next week.
+                  </div>
+                </div>
+              </div>
+
+              <!-- quotas / rate limits -->
+              <div class="card" style="margin-top:14px;">
+                <h4>Per-tenant guardrails <span class="mono">enforced at Worker</span></h4>
+                <div class="split" style="gap:14px;">
+                  <div>
+                    <div class="flag on"><div><strong>Daily tenant budget cap</strong><div class="mono">hard-stop at € 25 / day</div></div><div class="toggle"></div></div>
+                    <div class="flag on"><div><strong>Per-minute rate limit</strong><div class="mono">30 calls / min / tenant · durable object</div></div><div class="toggle"></div></div>
+                    <div class="flag on"><div><strong>Opus gating</strong><div class="mono">scenarios only · max 1 concurrent · per tenant</div></div><div class="toggle"></div></div>
+                    <div class="flag"><div><strong>Model allow-list</strong><div class="mono">client never picks · Worker enforces</div></div><div class="toggle"></div></div>
+                  </div>
+                  <div>
+                    <div class="flag on"><div><strong>Fallback to Haiku on Sonnet 5xx</strong><div class="mono">BMT-206 · auto</div></div><div class="toggle"></div></div>
+                    <div class="flag on"><div><strong>Cache onboarding by content hash</strong><div class="mono">same URL · instant · free</div></div><div class="toggle"></div></div>
+                    <div class="flag"><div><strong>Experimental · streaming batch</strong><div class="mono">beta · 3 tenants · off elsewhere</div></div><div class="toggle"></div></div>
+                    <div class="flag on"><div><strong>Kill switch</strong><div class="mono">stop all non-ingest Claude calls globally · flip = 30s propagation</div></div><div class="toggle"></div></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">the brain</div></div>
+
+      <!-- STAGE 5 — MODELS & EVALS -->
+      <section class="stage wide" id="s5" data-screen-label="05 Models and evals">
+        <div class="stage-head">
+          <div class="stage-num">05</div>
+          <div class="stage-title">Models &amp; evals — don't ship a regression</div>
+        </div>
+        <div class="stage-sub">One row per prompt. Each prompt has a version (git-tied), a golden-set score, a latency/cost profile, and a traffic dial. BMT-108 blocks merges that regress hallucination rate &gt; 1pp. This screen is where ML/eval eng lives.</div>
+
+        <div class="split">
+          <div class="card">
+            <h4>Prompts in production <span class="mono">7 · 2 shadowing</span></h4>
+            <div class="table">
+              <div class="tr th" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div>prompt · surface</div><div>model</div><div>ver</div><div>hallucination</div><div>p95 lat</div><div>traffic</div><div></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div><strong>extract.business_model</strong><div class="mono" style="color:var(--ink-soft);">stage 03</div></div>
+                <div><span class="tag">Sonnet</span></div><div>v36</div>
+                <div><span class="tag ok">0.4%</span></div><div>4.8s</div>
+                <div>100%</div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr; background: var(--accent-soft);">
+                <div><strong>extract.business_model</strong> <span class="tag warn" style="font-size:9px;">shadow</span><div class="mono" style="color:var(--ink-soft);">candidate · CI blocked</div></div>
+                <div><span class="tag">Sonnet</span></div><div>v37</div>
+                <div><span class="tag bad">1.2%</span></div><div>4.4s</div>
+                <div>0% <span class="mono" style="color:var(--ink-soft);">blocked</span></div>
+                <div style="text-align:right;"><span class="btn">Diff</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div><strong>classify.industry</strong><div class="mono" style="color:var(--ink-soft);">stage 03 ingest</div></div>
+                <div><span class="tag">Haiku</span></div><div>v12</div>
+                <div><span class="tag ok">0.2%</span></div><div>0.8s</div>
+                <div>100%</div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div><strong>nudge.gatekeeper</strong><div class="mono" style="color:var(--ink-soft);">stage 07</div></div>
+                <div><span class="tag">Sonnet</span></div><div>v9</div>
+                <div><span class="tag ok">0.1%</span></div><div>2.1s</div>
+                <div>100%</div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div><strong>coo.answer</strong><div class="mono" style="color:var(--ink-soft);">stage 08</div></div>
+                <div><span class="tag">Sonnet</span></div><div>v21</div>
+                <div><span class="tag ok">0.6%</span></div><div>3.2s</div>
+                <div>100%</div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div><strong>scenario.plan</strong><div class="mono" style="color:var(--ink-soft);">stage 09</div></div>
+                <div><span class="tag">Opus</span></div><div>v4</div>
+                <div><span class="tag ok">0.3%</span></div><div>11.4s</div>
+                <div>100%</div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+              <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.9fr 0.9fr 0.7fr 0.6fr;">
+                <div><strong>guardrail.claim_check</strong><div class="mono" style="color:var(--ink-soft);">shadow · every output</div></div>
+                <div><span class="tag">Haiku</span></div><div>v7</div>
+                <div><span class="tag ok">—</span></div><div>0.3s</div>
+                <div>100% shadow</div>
+                <div style="text-align:right;"><span class="btn">···</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Golden set <span class="mono">712 cases · BMT-108</span></h4>
+            <div style="font-size:12.5px;">
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>real onboardings (anonymised)</div><div class="mono" style="text-transform:none;">502</div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>adversarial · missing site</div><div class="mono" style="text-transform:none;">60</div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>adversarial · typo'd industry</div><div class="mono" style="text-transform:none;">45</div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>foreign language (non-DE/EN)</div><div class="mono" style="text-transform:none;">55</div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:4px 0;">
+                <div>promoted from user corrections (BMT-103)</div><div class="mono" style="text-transform:none;">50</div>
+              </div>
+            </div>
+            <hr class="divider"/>
+            <div class="mono">last run</div>
+            <div style="display:grid; grid-template-columns: 1fr auto; gap:4px; font-size:12px;">
+              <div>hallucinations</div><div class="tag ok">0.4% ↘︎</div>
+              <div>low-conf-shipped</div><div class="tag ok">2.1%</div>
+              <div>user-correction rate (7d)</div><div class="tag warn">8.4% ↗︎</div>
+              <div>citations-missing</div><div class="tag ok">0%</div>
+            </div>
+            <div class="sketch accent" style="padding:6px 8px; margin-top:10px; font-size:12px;">
+              <strong>CI gate:</strong> hallucination ↑ &gt; 1pp on golden set = auto-block merge. <code>extract.v37</code> hit this today → see Overview card.
+            </div>
+            <div style="margin-top:8px; text-align:right;">
+              <span class="btn">Run now</span>
+              <span class="btn">Golden set ↗</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">what plugs in</div></div>
+
+      <!-- STAGE 6 — CONNECTORS -->
+      <section class="stage" id="s6" data-screen-label="06 Connectors">
+        <div class="stage-head">
+          <div class="stage-num">06</div>
+          <div class="stage-title">Connectors — what's plugged in, what's dropping</div>
+        </div>
+        <div class="stage-sub">Fleet view of every third-party integration per tenant (BMT-107). Red bubbles = call support. Top right = status dial.</div>
+
+        <div class="split">
+          <div class="card">
+            <h4>Fleet health <span class="mono">1,248 tenants · live</span></h4>
+            <div style="display:grid; grid-template-columns: 1.6fr 0.7fr 0.7fr 0.7fr 0.7fr; gap:4px; align-items:center; font-size:12px;">
+              <div class="mono" style="font-size:10px;">connector</div>
+              <div class="mono" style="font-size:10px;">ok</div>
+              <div class="mono" style="font-size:10px;">degraded</div>
+              <div class="mono" style="font-size:10px;">revoked</div>
+              <div class="mono" style="font-size:10px;">never-setup</div>
+
+              <div><span class="sd ok"></span>Stripe</div>
+              <div>820</div><div style="color:var(--warn);">7</div><div>44</div><div>377</div>
+
+              <div><span class="sd ok"></span>SumUp</div>
+              <div>412</div><div>1</div><div>12</div><div>823</div>
+
+              <div><span class="sd ok"></span>Google Calendar</div>
+              <div>980</div><div>4</div><div>18</div><div>246</div>
+
+              <div><span class="sd warn"></span>Instagram (Meta API)</div>
+              <div>590</div><div style="color:var(--bad);">38</div><div>22</div><div>598</div>
+
+              <div><span class="sd ok"></span>PSD2 aggregator (bank)</div>
+              <div>340</div><div>6</div><div>88</div><div>814</div>
+
+              <div><span class="sd ok"></span>Gmail (drafts only)</div>
+              <div>210</div><div>2</div><div>18</div><div>1018</div>
+
+              <div><span class="sd off"></span>WhatsApp Business · beta</div>
+              <div>14</div><div>0</div><div>0</div><div>1234</div>
+            </div>
+            <div class="sticky" style="margin-top:10px; transform:rotate(-0.3deg); font-size:14px;">
+              Instagram spike (38 degraded) → likely Meta API token format change. Filed BMT-231.
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Data retention (passthrough) <span class="mono">BMT-107</span></h4>
+            <div style="font-size:12.5px;">
+              <p style="margin:0 0 8px; color: var(--ink-soft);">Rule of the system: we compute, we drop. No raw third-party payload lives on disk &gt; 60 min.</p>
+              <div class="table">
+                <div class="tr th" style="grid-template-columns: 1.4fr 0.7fr 0.9fr 0.7fr;">
+                  <div>source</div><div>ttl</div><div>derived keeps</div><div>status</div>
+                </div>
+                <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.9fr 0.7fr;">
+                  <div>Stripe charges</div><div>60m</div><div>daily roll-up, receipts</div><div><span class="tag ok">ok</span></div>
+                </div>
+                <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.9fr 0.7fr;">
+                  <div>PSD2 bank tx</div><div>60m</div><div>cashflow tiles only</div><div><span class="tag ok">ok</span></div>
+                </div>
+                <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.9fr 0.7fr;">
+                  <div>Gmail bodies</div><div>0m</div><div>thread meta only · redacted</div><div><span class="tag ok">ok</span></div>
+                </div>
+                <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.9fr 0.7fr;">
+                  <div>Instagram posts</div><div>24h</div><div>engagement stats</div><div><span class="tag warn">review</span></div>
+                </div>
+                <div class="tr" style="grid-template-columns: 1.4fr 0.7fr 0.9fr 0.7fr;">
+                  <div>User uploads (workbench)</div><div>forever</div><div>tenant-owned · delete on request</div><div><span class="tag ok">ok</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">the receipts</div></div>
+
+      <!-- STAGE 7 — AUDIT + SECURITY -->
+      <section class="stage" id="s7" data-screen-label="07 Audit and security">
+        <div class="stage-head">
+          <div class="stage-num">07</div>
+          <div class="stage-title">Audit &amp; security — the receipt drawer</div>
+        </div>
+        <div class="stage-sub">Every sensitive action in this whole console lands here. Immutable (append-only). Exportable. Searchable. This is where a future auditor will look first.</div>
+
+        <div class="split">
+          <div class="card">
+            <h4>Audit log <span class="mono">live · append-only</span></h4>
+            <div class="filter">
+              <input class="search" placeholder="actor · action · tenant · time"/>
+              <span class="chip on">all</span>
+              <span class="chip">write</span>
+              <span class="chip">auth</span>
+              <span class="chip">danger</span>
+              <span class="chip">svc</span>
+            </div>
+            <div class="aud">
+              <div class="ev bad">
+                <div class="ts">09:41:22 · robin@bmt</div>
+                <div><strong>tenant.suspend</strong> → <code>tnt_01H…Klaus</code> · reason: "staff request for account pause while on holiday"</div>
+              </div>
+              <div class="ev write">
+                <div class="ts">09:38:04 · cofounder@bmt</div>
+                <div><strong>tenant.impersonate.start</strong> → <code>tnt_01H…Lina</code> · consent token <code>cns_ab2…</code> · ttl 30m</div>
+              </div>
+              <div class="ev warn">
+                <div class="ts">09:22:10 · svc·eval-ci</div>
+                <div><strong>prompt.ci.block</strong> · <code>extract.business_model v37</code> · hallucination +0.8pp on golden set</div>
+              </div>
+              <div class="ev auth">
+                <div class="ts">09:14:55 · robin@bmt</div>
+                <div><strong>auth.signin</strong> · from Berlin · 2FA via SMS · session <code>ses_9f…</code></div>
+              </div>
+              <div class="ev write">
+                <div class="ts">08:52:19 · cofounder@bmt</div>
+                <div><strong>flag.flip</strong> · <code>scenario.opus_parallel</code> OFF → ON · 3 tenants (beta cohort)</div>
+              </div>
+              <div class="ev warn">
+                <div class="ts">08:17:44 · worker</div>
+                <div><strong>rate_limit.hit</strong> · <code>tnt_01H…Franka</code> · 30/min cap · throttled 4 calls</div>
+              </div>
+              <div class="ev write">
+                <div class="ts">07:02:01 · svc·worker</div>
+                <div><strong>key.rotate.begin</strong> · <code>ANTHROPIC_API_KEY</code> dual-key window opened · runbook BMT-111</div>
+              </div>
+            </div>
+            <div style="text-align:right; margin-top:8px;">
+              <span class="btn">Export last 30d</span>
+              <span class="btn primary">Forward to SIEM</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Security posture <span class="mono">weekly check</span></h4>
+            <div style="font-size:12.5px;">
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>Claude key last rotated</div><div><span class="tag ok">38 days</span></div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>Secrets scanning (gitleaks)</div><div><span class="tag ok">0 findings · last run 2h</span></div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>JWT signing key</div><div><span class="tag ok">valid · rotate Q3</span></div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>Team 2FA coverage</div><div><span class="tag warn">3 / 4 — hire #3 pending</span></div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>PII scrub regex suite</div><div><span class="tag ok">green · last tested 12h</span></div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                <div>DSGVO export pipeline</div><div><span class="tag ok">tested · 2 tenants this wk</span></div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; padding:5px 0;">
+                <div>Worker deploy pinning (<code>anthropic-version</code>)</div><div><span class="tag ok">2023-06-01</span></div>
+              </div>
+            </div>
+
+            <div class="sticky" style="margin-top:12px; transform:rotate(-0.6deg); font-size:14px;">
+              Every red dot here is a future lawsuit. Green-by-default, reviewed weekly, automated alerts.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="flow-arrow">→<div class="mono">under the hood</div></div>
+
+      <!-- STAGE 8 — BACKEND WIRE -->
+      <section class="stage wide" id="s8" data-screen-label="08 Backend wire">
+        <div class="stage-head">
+          <div class="stage-num">08</div>
+          <div class="stage-title">How the admin console connects to the back-end</div>
+        </div>
+        <div class="stage-sub">Same spine as the user flow (BMT-110 Worker). Admin is just another client — but with a privileged session JWT and a stricter CIDR allow-list. No second API surface for admin, ever: same Worker, same rate limits, same audit path.</div>
+
+        <div class="wire">
+          <div class="lane">
+            <div class="lane-label">1 · identity</div>
+            <div class="hop">
+              <div class="node admin"><strong>admin.bmt.internal</strong><div class="mono">browser · this console</div></div>
+              <span class="arr">→</span>
+              <div class="node secret"><strong>SSO (Google Workspace)</strong><div class="mono">domain-restricted · 2FA required</div></div>
+              <span class="arr">→</span>
+              <div class="node worker"><strong>JWT · role=owner|admin|support|eval</strong><div class="mono">15-min · CIDR-locked</div></div>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label">2 · reads</div>
+            <div class="hop">
+              <div class="node admin"><strong>fetch /admin/tenants</strong><div class="mono">admin-only routes on same Worker</div></div>
+              <span class="arr">→</span>
+              <div class="node worker"><strong>CF Worker · bmt-claude-proxy</strong><div class="mono">verify role · role-filter query</div></div>
+              <span class="arr">→</span>
+              <div class="node"><strong>Postgres · replica</strong><div class="mono">tenants · users · metrics rollups</div></div>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label">3 · writes (sensitive)</div>
+            <div class="hop">
+              <div class="node admin"><strong>POST /admin/tenant/:id/suspend</strong><div class="mono">requires reason</div></div>
+              <span class="arr">→</span>
+              <div class="node worker"><strong>Worker · 2-person check</strong><div class="mono">if required by role matrix</div></div>
+              <span class="arr">→</span>
+              <div class="node"><strong>Postgres · primary</strong><div class="mono">txn + audit row</div></div>
+              <span class="arr">→</span>
+              <div class="node secret"><strong>Audit log (append-only)</strong><div class="mono">also forwarded to SIEM</div></div>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label">4 · observe</div>
+            <div class="hop">
+              <div class="node worker"><strong>Worker · Logpush</strong><div class="mono">structured json · no prompt bodies</div></div>
+              <span class="arr">→</span>
+              <div class="node"><strong>Metrics store</strong><div class="mono">per-tenant · per-model · per-surface</div></div>
+              <span class="arr">→</span>
+              <div class="node admin"><strong>04 Usage &amp; cost</strong><div class="mono">this console · read-only</div></div>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label">5 · impersonate</div>
+            <div class="hop">
+              <div class="node admin"><strong>Admin clicks "Impersonate"</strong><div class="mono">02 tenant drawer</div></div>
+              <span class="arr">→</span>
+              <div class="node secret"><strong>Consent request → operator phone (SMS)</strong><div class="mono">6-digit code · one-time</div></div>
+              <span class="arr">→</span>
+              <div class="node worker"><strong>Consent token · TTL 30min</strong><div class="mono">read-only session · big red banner</div></div>
+              <span class="arr">→</span>
+              <div class="node"><strong>Audit row · session recording</strong><div class="mono">viewable by the operator later</div></div>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label">6 · eval (one-way)</div>
+            <div class="hop">
+              <div class="node admin"><strong>05 Models &amp; evals</strong><div class="mono">push prompt change</div></div>
+              <span class="arr">→</span>
+              <div class="node"><strong>GH PR → eval-ci</strong><div class="mono">BMT-108 golden set</div></div>
+              <span class="arr">→</span>
+              <div class="node worker"><strong>Prompt registry in Worker KV</strong><div class="mono">versioned · rollback-able</div></div>
+              <span class="arr">→</span>
+              <div class="node api"><strong>api.anthropic.com</strong><div class="mono">as usual</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:14px;">
+          <div class="sketch accent" style="padding:12px 14px;">
+            <div class="hand" style="font-size:20px;">🔐 Non-negotiables</div>
+            <ul style="font-size:12.5px; padding-left:18px; margin:6px 0;">
+              <li>Admin uses the <em>same</em> Worker as users — no separate API key, no alternate path.</li>
+              <li>Admin session = SSO + 2FA + CIDR + 15-min JWT. Expired = logged out mid-task.</li>
+              <li>Impersonation always requires operator consent via SMS code (their identity anchor) + is recorded.</li>
+              <li>Prompt bodies are <strong>never</strong> readable — not even by founders. Only meta.</li>
+              <li>Every write above has an audit row. If it's not in the log, it didn't happen.</li>
+            </ul>
+          </div>
+          <div class="sketch" style="padding:12px 14px;">
+            <div class="hand" style="font-size:20px;">📦 What we skip in v0</div>
+            <ul style="font-size:12.5px; padding-left:18px; margin:6px 0;">
+              <li>SAML / SCIM — SSO-only team is &lt;10 people. Revisit at 15.</li>
+              <li>Per-tenant regional sharding — one EU region for now.</li>
+              <li>Customer-managed keys (BYOK for Claude) — enterprise-only, year 2.</li>
+              <li>Multi-region replica for admin reads — replica in same region is fine until 10k tenants.</li>
+              <li>Webhooks out to tenant systems — not our job in v0.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="sticky" style="margin-top:16px; transform:rotate(-0.5deg); max-width:820px;">
+          <strong>Design contract, one line:</strong> anything an admin can do, an operator could one day audit — because it happened <em>to their business</em>. That's why every row is logged, every suspend has a reason, every impersonation has their consent.
+        </div>
+      </section>
+
+    </div><!-- /stages -->
+
+  </div><!-- /canvas -->
+</div><!-- /canvas-scroll -->
+
+</body>
+</html>
